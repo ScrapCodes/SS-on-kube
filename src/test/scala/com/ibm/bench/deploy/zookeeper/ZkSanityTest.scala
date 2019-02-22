@@ -13,18 +13,19 @@
 
 package com.ibm.bench.deploy.zookeeper
 
-import scala.concurrent.duration._
-import scala.collection.JavaConverters._
-
 import com.ibm.bench.deploy.SanityTestUtils
+import com.ibm.bench.util.SBConfig
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.scalatest.concurrent.Eventually._
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
-class SanityTest extends FunSuite with BeforeAndAfterAll {
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+
+class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
 
   private lazy val kubernetesClient = new DefaultKubernetesClient()
-    .inNamespace("default")
+    .inNamespace(SBConfig.NAMESPACE)
 
   override def beforeAll() {
     kubernetesClient
