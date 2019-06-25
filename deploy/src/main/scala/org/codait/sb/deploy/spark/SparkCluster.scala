@@ -16,7 +16,7 @@ package org.codait.sb.deploy.spark
 import java.io.File
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
-import org.codait.sb.util.{SBConfig, SanityTestUtils}
+import org.codait.sb.util.{SBConfig, ClusterUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.io.Source
@@ -69,12 +69,12 @@ object SparkCluster {
       .directory(new File(sparkHome.get))
     logger.info(s"Starting, spark job with command: ${sparkSubmitCommand.mkString(" ")}")
     sparkProcessBuilder.start()
-    waitUntilSparkDriverCompletes(outputLog.getAbsolutePath, timeoutSeconds)
+    waitUntilSparkDriverCompletes(errorLog.getAbsolutePath, timeoutSeconds)
     logger.info("Spark job finished.")
   }
 
   private def waitUntilSparkDriverCompletes(logPath: String, timeoutSeconds: Int): Boolean = {
-    SanityTestUtils.reAttempt(condition = ()  => parsePodNameFromLogs(logPath).isDefined,
+    ClusterUtils.reAttempt(condition = () => parsePodNameFromLogs(logPath).isDefined,
       timeoutSeconds = timeoutSeconds)
     val podName = parsePodNameFromLogs(logPath).get
 
@@ -82,7 +82,7 @@ object SparkCluster {
 
     def getPodPhase: String = kubernetesClient.pods().withName(podName).get().getStatus.getPhase
 
-    SanityTestUtils.reAttempt( timeoutSeconds = timeoutSeconds,
+    ClusterUtils.reAttempt( timeoutSeconds = timeoutSeconds,
       condition = () => getPodPhase.equalsIgnoreCase("completed") ||
         getPodPhase.equalsIgnoreCase("Succeeded"),
       msg = () => s"Spark driver pod with name: $podName, did not complete in time." +
@@ -93,7 +93,8 @@ object SparkCluster {
     val logFile = new File(path)
     assert(logFile.exists(), s"$logFile does not exists, did spark job ran?")
     val bufferedSource = Source.fromFile(path)
-    val line: Option[String] = bufferedSource.getLines().find(_.contains("pod name:"))
+    val strings = bufferedSource.getLines()
+    val line: Option[String] = strings.find(_.contains("pod name:"))
     bufferedSource.close()
     line.map { l =>
       val (_, podName) = l.splitAt(l.indexOf(':') + 1)

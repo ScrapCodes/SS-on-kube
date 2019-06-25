@@ -24,8 +24,8 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
-/** Utilities to sanity test a cluster running inside the kubernetes */
-private[sb] object SanityTestUtils {
+/** Utilities for cluster running inside the kubernetes */
+private[sb] object ClusterUtils {
 
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -41,15 +41,21 @@ private[sb] object SanityTestUtils {
 
   /**
     *
-    * @param ss Statefulset to be waited upon.
+    * @param ss             Statefulset to wait for.
     * @param timeoutSeconds timeout in seconds.
     */
-  def waitForClusterUpAndReady(client: KubernetesClient, ss: StatefulSet, timeoutSeconds: Int = 5): Unit = {
+  def waitForClusterUpAndReady(
+                                client: KubernetesClient,
+                                ss: StatefulSet,
+                                timeoutSeconds: Int = 5,
+                                throwException: Boolean = true): Boolean = {
     val count = 20
     val ssName = ss.getMetadata.getName
+
     def ss2: StatefulSet = client.apps().statefulSets().withName(ssName).get()
+
     reAttempt(count = count, timeoutSeconds = timeoutSeconds, condition = () => isStatefulSetReady(ss2),
-      msg = () => s"Value of Spec: ${ss2.getSpec}, ${ss2.getStatus}")
+      msg = () => s"Value of Spec: ${ss2.getSpec}, ${ss2.getStatus}", throwException = throwException)
   }
 
   def execCommand(pod: Pod,
@@ -88,7 +94,7 @@ private[sb] object SanityTestUtils {
   }
 
   def getPodsWhenReady(client: KubernetesClient,
-                               labels: util.Map[String, String]): Seq[Pod] = {
+                       labels: util.Map[String, String]): Seq[Pod] = {
     def podList: Seq[Pod] = client.pods().withLabels(labels).list().getItems.asScala
 
     reAttempt(condition = () => podList != null || podList.nonEmpty)
@@ -108,18 +114,18 @@ private[sb] object SanityTestUtils {
     * Re attempt to evaluate the condition, until the count of number of tries finishes or condition
     * is successful.
     *
-    * @param count     Number of retries, default is 10.
-    * @param condition Condition to evaluate, until true.
-    * @param sleep     milliseconds to sleep, between reattempts.
-    * @param msg       Function to evaluate, for generating helpful debug messages.
+    * @param count          Number of retries, default is 10.
+    * @param condition      Condition to evaluate, until true.
+    * @param timeoutSeconds total timeout to wait for.
+    * @param msg            Function to evaluate, for generating helpful debug messages.
     * @param throwException Whether to throw exception, helpful, in externally controlling reattempt.
     * @return
     */
   def reAttempt(count: Int = 10,
-                        condition: () => Boolean,
-                        timeoutSeconds: Int = 5,
-                        msg: () => String = () => "",
-                        throwException: Boolean = true): Boolean = {
+                condition: () => Boolean,
+                timeoutSeconds: Int = 5,
+                msg: () => String = () => "",
+                throwException: Boolean = true): Boolean = {
     var i = count
     val sleep = timeoutSeconds * 1000 / count
     while (i > 0 && !condition()) {
@@ -129,7 +135,7 @@ private[sb] object SanityTestUtils {
     }
 
     if (i == 0 && throwException) {
-      throw new BenchmarkException(
+      throw new DeploymentException(
         s"Timed out trying to wait for the condition: \n ${msg()}\n")
     }
     logger.debug(s"Timed out trying to wait for the condition: \n ${msg()}\n")

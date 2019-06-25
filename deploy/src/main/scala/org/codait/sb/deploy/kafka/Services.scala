@@ -22,15 +22,16 @@ import scala.collection.JavaConverters._
 private [kafka]
 object Services {
 
-  val labels: util.Map[String, String] = Map("app" -> "kafka").asJava
+  def labels(prefix: String): util.Map[String, String] =
+    Map("app" -> s"kafka$prefix").asJava
 
-  val brokerService: Service = new ServiceBuilder()
+  def brokerService(prefix: String): Service = new ServiceBuilder()
     .withNewMetadata()
-      .withName(Constants.KAFKA_SERVICE_NAME)
-      .withLabels(labels)
+      .withName(Helpers.kafkaServiceName(prefix))
+      .withLabels(labels(prefix))
       .endMetadata()
     .withNewSpec()
-      .withSelector(labels)
+      .withSelector(labels(prefix))
       .addNewPort()
         .withName(Constants.KAFKA_BROKER_PORT_NAME)
         .withPort(Constants.KAFKA_BROKER_PORT)

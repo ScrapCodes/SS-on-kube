@@ -22,6 +22,7 @@ object Main {
 
   def help(): String = {
     """
+      |Currently not Implemented.
       |Help
       |
       |Supported commands:
@@ -35,10 +36,10 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     args(0) match {
-      case "zk-start" => ZKCluster.start()
-      case "zk-stop" => ZKCluster.stop()
-      case "kafka-start" => KafkaCluster.start()
-      case "kafka-stop" => KafkaCluster.stop()
+//      case "zk-start" => ZKCluster.start()
+//      case "zk-stop" => ZKCluster.stop()
+//      case "kafka-start" => KafkaCluster.start()
+//      case "kafka-stop" => KafkaCluster.stop()
       case _ => logger.info(help())
     }
 

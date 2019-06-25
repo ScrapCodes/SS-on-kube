@@ -13,7 +13,6 @@
 
 package org.codait.sb.deploy.kafka
 
-import org.codait.sb.deploy.{zookeeper => zk}
 import io.fabric8.kubernetes.api.model.{Container, ContainerBuilder, EnvVarBuilder, QuantityBuilder}
 
 private [kafka]
@@ -40,9 +39,9 @@ object KafkaContainer {
     .withValue("yes")
     .build()
 
-  private val kafkaZookeeperConnectEnvVar = new EnvVarBuilder()
+  private def kafkaZookeeperConnectEnvVar(zkAddr: String) = new EnvVarBuilder()
     .withName("KAFKA_ZOOKEEPER_CONNECT")
-    .withValue(s"${zk.Constants.ZK_CLIENT_SERVICE_NAME}:${zk.Constants.ZK_CLIENT_PORT}")
+    .withValue(zkAddr)
     .build()
 
   private val kafkaTopicEnvVar = new EnvVarBuilder()
@@ -50,15 +49,15 @@ object KafkaContainer {
     .withValue(s"true")
     .build()
 
-  private[kafka] val container: Container = new ContainerBuilder()
-    .withName(Constants.KAFKA_CONTAINER_NAME)
+  def container(prefix: String, zkAddr: String): Container = new ContainerBuilder()
+    .withName(Helpers.kafkaContainerName(prefix))
     .withImage(Constants.KAFKA_CONTAINER_IMAGE_NAME)
     .addNewPort()
       .withName(Constants.KAFKA_BROKER_PORT_NAME)
       .withContainerPort(Constants.KAFKA_BROKER_PORT)
       .withProtocol("TCP")
       .endPort()
-    .withEnv(allowPlainTextEnvVar, kafkaZookeeperConnectEnvVar, kafkaTopicEnvVar)
+    .withEnv(allowPlainTextEnvVar, kafkaZookeeperConnectEnvVar(zkAddr), kafkaTopicEnvVar)
     .withNewReadinessProbe()
       .withNewTcpSocket()
         .withNewPort(Constants.KAFKA_BROKER_PORT)
@@ -66,7 +65,7 @@ object KafkaContainer {
       .withInitialDelaySeconds(60)
       .withTimeoutSeconds(5)
       .withPeriodSeconds(20)
-      .withFailureThreshold(10)
+      .withFailureThreshold(20)
       .endReadinessProbe()
     .withNewLivenessProbe()
       .withNewTcpSocket()

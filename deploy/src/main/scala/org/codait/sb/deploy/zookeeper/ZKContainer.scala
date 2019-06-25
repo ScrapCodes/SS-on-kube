@@ -58,11 +58,11 @@ object ZKContainer {
   private val livenessProbeCommand =
     Seq("sh", "-c", s"zookeeper-ready ${Constants.ZK_CLIENT_PORT}").asJava
 
-  private val readinessProbeCommand =
-    Seq("sh", "-c", "zkCli.sh create /test 1").asJava
+  private def readinessProbeCommand =
+    Seq("sh", "-c", "zkCli.sh create /test$(date -j \"+%H%M%S\") 1").asJava
 
-  val container: Container = new ContainerBuilder()
-    .withName(Constants.ZK_CONTAINER_NAME)
+  def container(prefix: String): Container = new ContainerBuilder()
+    .withName(Helpers.zkContainerName(prefix))
     .withImage(Constants.ZK_IMAGE)
     .addNewPort()
       .withName("client")
@@ -103,6 +103,4 @@ object ZKContainer {
       .addToLimits("cpu", cpuQuantityLimit)
       .endResources()
     .build()
-
-
 }

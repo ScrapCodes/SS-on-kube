@@ -22,16 +22,16 @@ import scala.collection.JavaConverters._
 private[zookeeper]
 object Services {
 
-  val labels: util.Map[String, String] = Map("app" -> "zk").asJava
+  def labels(prefix: String): util.Map[String, String] = Map("app" -> s"zk$prefix").asJava
 
-  val internalService: Service = new ServiceBuilder()
+  def internalService(prefix: String): Service = new ServiceBuilder()
     .withNewMetadata()
-      .withName(Constants.ZK_INTERNAL_SERVICE_NAME)
-      .withLabels(labels)
+      .withName(Helpers.zkInternalServiceName(prefix))
+      .withLabels(labels(prefix))
       .endMetadata()
     .withNewSpec()
       .withClusterIP("None")
-      .withSelector(labels)
+      .withSelector(labels(prefix))
       .addNewPort()
         .withName("server")
         .withPort(Constants.ZK_SERVER_PORT)
@@ -45,14 +45,13 @@ object Services {
     .endSpec()
     .build()
 
-
-  val clientService: Service = new ServiceBuilder()
+  def clientService(prefix: String): Service = new ServiceBuilder()
     .withNewMetadata()
-      .withName(Constants.ZK_CLIENT_SERVICE_NAME)
-      .withLabels(labels)
+      .withName(Helpers.zkClientServiceName(prefix))
+      .withLabels(labels(prefix))
       .endMetadata()
     .withNewSpec()
-      .withSelector(labels)
+      .withSelector(labels(prefix))
       .addNewPort()
         .withName("client")
         .withPort(Constants.ZK_CLIENT_PORT)

@@ -30,7 +30,10 @@ class SparkSanityTest extends FunSuite with BeforeAndAfterAll {
       sparkPiClass,
       sparkImagePath,
       serviceAccount,
-      examplesJar, timeoutSeconds = 60)
+      examplesJar, timeoutSeconds = 120)
+  }
+
+  ignore("Spark streaming kafka.") {
   }
 
 }

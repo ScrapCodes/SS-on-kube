@@ -16,9 +16,12 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / resolvers    += Resolver.mavenLocal
 
-lazy val root = project.settings(
-    name := "streaming-benchmark",
-    (run / aggregate) := false)
+lazy val sb = project.in(file(".")).settings(
+  // To force the user to run submodule specific run, by doing project submodule.
+  (run / aggregate) := false,
+  // To turn off packaging for the empty aggregator project.
+  publishArtifact :=  false,
+  test := {})
   .aggregate(deploy, bench)
 
 lazy val deploy = project
@@ -34,7 +37,7 @@ lazy val deploy = project
 lazy val bench = project
   .in(file("bench"))
   .settings(
-      libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.0"),
-      libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.0"),
+      libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.3"),
+      libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.3"),
       libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )

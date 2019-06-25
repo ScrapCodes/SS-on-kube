@@ -11,11 +11,7 @@
  * additional information regarding copyright ownership.
  */
 
-package org.codait.sb.util
+package org.codait.sb.deploy
 
-private[sb] case class BenchmarkException(message: String, cause: Throwable)
-  extends Exception(message, cause) {
-    def this(message: String) {
-      this(message, null)
-    }
-  }
+class ClusterConfig(val clusterPrefix: String,
+                    val replicaSize: Int)

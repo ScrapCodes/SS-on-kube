@@ -13,12 +13,13 @@
 
 package org.codait.sb.deploy.zookeeper
 
-import org.codait.sb.util.{SBConfig, SanityTestUtils}
+import java.util.UUID
+
+import org.codait.sb.util.{SBConfig, ClusterUtils}
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
 import org.scalatest.concurrent.Eventually._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
@@ -26,28 +27,27 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
   private lazy val kubernetesClient = new DefaultKubernetesClient()
     .inNamespace(SBConfig.NAMESPACE)
 
+  private val testingPrefix = s"t${UUID.randomUUID().toString.takeRight(5)}"
+
+  private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
+    replicaSize = 3))
+
   override def beforeAll() {
+    zkCluster.start()
     kubernetesClient
-    val serviceList = kubernetesClient.services().list().getItems.asScala
-    assert(serviceList.exists(_.getMetadata.getName ==
-      Services.clientService.getMetadata.getName), "Cluster should be started before sanity tested.")
-    assert(serviceList.exists(_.getMetadata.getName ==
-      Services.internalService.getMetadata.getName), "Cluster should be started before sanity tested.")
-    val ssName = ZKStatefulSet.statefulSet.getMetadata.getName
-    val ss = kubernetesClient.apps().statefulSets().withName(ssName).get()
-    SanityTestUtils.waitForClusterUpAndReady(kubernetesClient, ss, timeoutSeconds = 20)
+    assert(zkCluster.isRunning(20))
   }
 
 
   test("Zookeeper pods are up and initialized properly.") {
-    val zkPods = SanityTestUtils.getPodsWhenReady(kubernetesClient, Services.labels)
+    val zkPods = zkCluster.getPods
     for (pod <- zkPods) {
       val podName = pod.getMetadata.getName
 
       val (_, podOrdinal) = podName.splitAt(podName.indexOf('-') + 1)
       eventually(timeout(2.minutes), interval(20.seconds)) {
         val (result: String, _) =
-          SanityTestUtils.execCommand(pod, command = "cat /var/lib/zookeeper/data/myid", kubernetesClient,
+          ClusterUtils.execCommand(pod, command = "cat /var/lib/zookeeper/data/myid", kubernetesClient,
             chkResult = (podOrdinal.trim.toInt + 1).toString)
 
         assert(podOrdinal.trim.toInt + 1 == result.trim.toInt,
@@ -57,22 +57,26 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("Zookeeper service is running and all the nodes have discovered each other.") {
-    val zkPods = SanityTestUtils.getPodsWhenReady(kubernetesClient, Services.labels)
+    val zkPods = zkCluster.getPods
     val pod1 = zkPods.head
     val pod2 = zkPods.last
 
     // Clean up.
-    SanityTestUtils.execCommand(pod1, "zkCli.sh delete /hello", kubernetesClient)
+    ClusterUtils.execCommand(pod1, "zkCli.sh delete /hello", kubernetesClient)
     val createCommand = "zkCli.sh create /hello world"
     // Create an object, "Hello World".
     eventually(timeout(3.minutes), interval(30.seconds)) {
       val (result1: String, success: Boolean) =
-        SanityTestUtils.execCommand(pod1, command = createCommand, kubernetesClient, chkResult = "Created")
+        ClusterUtils.execCommand(pod1, command = createCommand, kubernetesClient, chkResult = "Created")
       assert(result1.contains("Created /hello"), s"Zookeeper object creation failed.$result1")
       // Retrieve same object from another pod.
       val (result2, success2) =
-        SanityTestUtils.execCommand(pod2, command = "zkCli.sh get /hello", kubernetesClient, chkResult = "world")
+        ClusterUtils.execCommand(pod2, command = "zkCli.sh get /hello", kubernetesClient, chkResult = "world")
       assert(result2.contains("world"), s"Object could not be retrieved.$result2")
     }
+  }
+
+  override def afterAll(): Unit = {
+    zkCluster.stop()
   }
 }
