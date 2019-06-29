@@ -11,25 +11,14 @@
  * additional information regarding copyright ownership.
  */
 
-package org.codait.sb.deploy.spark
+package org.codait.sb.it.spark
 
-import java.util.UUID
-
-import org.codait.sb.deploy.Cluster
 import org.codait.sb.deploy.kafka.{KafkaCluster, KafkaClusterConfig}
+import org.codait.sb.deploy.spark.{SparkJobCluster, SparkJobClusterConfig}
 import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
 
-class SparkSanityTest extends FunSuite with BeforeAndAfterAll {
-  // TODO: following should be picked up from configuration.
-  private val sparkImagePath: String = "scrapcodes/spark:v2.4.0"
-  private val testingPrefix = s"${UUID.randomUUID().toString.takeRight(5)}"
-  private val testK8sNamespace = "default"
-  private val serviceAccount = "spark"
-  private val sparkHome = "/Users/prashant/Work/spark-2.4.0-bin-hadoop2.7"
-  private val examplesJar = "/opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar"
-  private val localExamplesJar = s"$sparkHome/examples/jars/spark-examples_2.11-2.4.0.jar"
-
+class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
   ignore("Spark streaming kafka.") {
     // This test needs three clusters running in order.
     // 1. Zookeeper
@@ -68,7 +57,7 @@ class SparkSanityTest extends FunSuite with BeforeAndAfterAll {
     assert(sparkJobCluster.isRunning(120),
       s"spark cluster did not start.")
 
-    Cluster.k8sClient.pods().withName(kafkaPodName).writingOutput(System.out).writingError(System.err)
+    k8sClient.pods().withName(kafkaPodName).writingOutput(System.out).writingError(System.err)
       .exec("bash", "-c",
         s"echo 'test-$topic' | kafka-console-producer.sh --topic $topic --broker-list $brokerAddress")
 
@@ -80,5 +69,4 @@ class SparkSanityTest extends FunSuite with BeforeAndAfterAll {
     kafkaCluster.stop()
     zkCluster.stop()
   }
-
 }

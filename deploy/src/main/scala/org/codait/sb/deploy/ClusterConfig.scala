@@ -13,5 +13,6 @@
 
 package org.codait.sb.deploy
 
-class ClusterConfig(val clusterPrefix: String,
-                    val replicaSize: Int)
+abstract class ClusterConfig {
+  val kubernetesNamespace: String
+}

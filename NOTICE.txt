@@ -5,4 +5,5 @@ The product includes software developed at IBM CODAIT (codait.org).
 
 Exceptions
 ----------
-The product includes work which may be copyrighted or distributed by a vendor other than IBM. Please see the individual file headers, for more information.
+The product includes work which may be copyrighted or distributed by a vendor other than IBM.
+Please see the individual file headers, for more information.

@@ -25,6 +25,12 @@ object Services {
   def labels(prefix: String): util.Map[String, String] =
     Map("app" -> s"kafka$prefix").asJava
 
+  def getNodePort(svc: Service): Int = {
+    // Since we have a single port defined, we can use this helper for fetching
+    // the nodeport once it is assigned.
+    svc.getSpec.getPorts.get(0).getNodePort
+  }
+
   def brokerService(prefix: String): Service = new ServiceBuilder()
     .withNewMetadata()
       .withName(Helpers.kafkaServiceName(prefix))
@@ -32,10 +38,10 @@ object Services {
       .endMetadata()
     .withNewSpec()
       .withSelector(labels(prefix))
+      .withType("NodePort")
       .addNewPort()
         .withName(Constants.KAFKA_BROKER_PORT_NAME)
         .withPort(Constants.KAFKA_BROKER_PORT)
-        .withNewTargetPort(Constants.KAFKA_BROKER_PORT)
         .endPort()
       .endSpec()
     .build()

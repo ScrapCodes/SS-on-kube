@@ -30,25 +30,39 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   private def serviceList =
-    kubernetesClient.services().withLabels(Services.labels(prefix)).list().getItems.asScala
+    Cluster.k8sClient.services()
+      .withLabels(Services.labels(prefix)).list().getItems.asScala
 
-  override val serviceAddress: String =
-    s"${Helpers.kafkaServiceName(prefix)}:${Constants.KAFKA_BROKER_PORT}"
+  private def brokerService() = {
+    serviceList.find(_.getMetadata.getName ==
+      Services.brokerService(prefix).getMetadata.getName)
+  }
+
+  override def serviceAddresses: Map[String, String] = {
+    assert(isRunning(5), "Kafka service is not running.")
+    Map("kafka-broker-internal" ->
+      s"${Helpers.kafkaServiceName(prefix)}:${Constants.KAFKA_BROKER_PORT}",
+      "kafka-broker-external" ->
+        (s"${KafkaStatefulSet.statefulSet(clusterConfig).getMetadata.getName}-0" +
+          s".${Helpers.kafkaServiceName(prefix)}.${clusterConfig.kubernetesNamespace}.svc.cluster.local:" +
+          s"${Services.getNodePort(brokerService().get)}"))
+  }
 
   private val podsAssigned = ArrayBuffer[Pod]()
 
-  def start(): Unit = {
-    kubernetesClient.services().createOrReplace(Services.brokerService(prefix))
+  override def start(): Unit = {
+    Cluster.k8sClient.services().createOrReplace(Services.brokerService(prefix))
     logger.info("Starting kafka services.")
 
     assert(serviceList.size == 1, "'Start kafka services' should be submitted.")
-    val ss = kubernetesClient.apps()
+    val ss = Cluster.k8sClient.apps()
       .statefulSets()
       .createOrReplace(KafkaStatefulSet.statefulSet(clusterConfig))
     logger.info(s"Stateful set: ${ss.getMetadata.getName} submitted.")
-    ClusterUtils.waitForClusterUpAndReady(client = kubernetesClient, ss, timeoutSeconds = 120)
+    ClusterUtils.waitForClusterUpAndReady(client = Cluster.k8sClient, ss,
+      timeoutSeconds = clusterConfig.startTimeoutSeconds)
 
-    val pods = kubernetesClient.pods().withLabels(Services.labels(prefix))
+    val pods = Cluster.k8sClient.pods().withLabels(Services.labels(prefix))
       .list().getItems.asScala
 
     podsAssigned.appendAll(pods)
@@ -70,22 +84,22 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
     * @return Returns false in both cases, one it is determined the cluster is not running or,
     *         it could not be ascertained in the given timeout.
     */
-  def isRunning(timeoutSeconds: Int = 5): Boolean = {
-    val serviceList = kubernetesClient.services().list().getItems.asScala
+  override def isRunning(timeoutSeconds: Int = 5): Boolean = {
+    val serviceList = Cluster.k8sClient.services().list().getItems.asScala
 
     val isBrokerServiceUp = serviceList.exists(_.getMetadata.getName ==
       Services.brokerService(prefix).getMetadata.getName)
 
     val ssName = KafkaStatefulSet.statefulSet(clusterConfig).getMetadata.getName
-    val ss = kubernetesClient.apps().statefulSets().withName(ssName).get()
+    val ss = Cluster.k8sClient.apps().statefulSets().withName(ssName).get()
 
-    isBrokerServiceUp && ClusterUtils.waitForClusterUpAndReady(kubernetesClient, ss,
+    isBrokerServiceUp && ClusterUtils.waitForClusterUpAndReady(Cluster.k8sClient, ss,
        timeoutSeconds, throwException = false)
   }
 
-  def stop(): Unit = {
-    kubernetesClient.services().delete(serviceList.asJava)
-    kubernetesClient.apps().statefulSets()
+  override def stop(): Unit = {
+    Cluster.k8sClient.services().delete(serviceList.asJava)
+    Cluster.k8sClient.apps().statefulSets()
       .delete(KafkaStatefulSet.statefulSet(clusterConfig))
   }
 

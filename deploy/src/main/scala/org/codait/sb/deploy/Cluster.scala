@@ -19,15 +19,10 @@ import org.codait.sb.util.SBConfig
 
 trait Cluster {
 
-  //TODO: Have a proper client factory, which loads all configuration specified by the user.
-  protected lazy val kubernetesClient: NamespacedKubernetesClient =
-    new DefaultKubernetesClient().inNamespace(SBConfig.NAMESPACE)
-
   /**
-    * Address of the service exposed by this cluster.
-    * TODO: Should be plural, incase the cluster exposes multiple services.
+    * Addresses of the services exposed by this cluster.
     */
-  val serviceAddress: String
+  def serviceAddresses: Map[String, String]
 
   val clusterConfig: ClusterConfig
 
@@ -38,4 +33,10 @@ trait Cluster {
   def stop(): Unit
 
   def isRunning(timeoutSeconds: Int): Boolean
+}
+
+object Cluster {
+  //TODO: Have a proper client factory, which loads all configuration specified by the user.
+  private[deploy] lazy val k8sClient: NamespacedKubernetesClient =
+    new DefaultKubernetesClient().inNamespace(SBConfig.NAMESPACE)
 }

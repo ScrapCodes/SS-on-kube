@@ -15,7 +15,9 @@ package org.codait.sb.deploy.kafka
 
 import org.codait.sb.deploy.ClusterConfig
 
-case class KafkaClusterConfig(override val clusterPrefix: String,
-                              override val replicaSize: Int,
-                              zookeeperAddress: String)
-  extends ClusterConfig(clusterPrefix, replicaSize)
+case class KafkaClusterConfig(clusterPrefix: String,
+                              replicaSize: Int,
+                              zookeeperAddress: String,
+                              startTimeoutSeconds: Int,
+                              override val kubernetesNamespace: String)
+  extends ClusterConfig

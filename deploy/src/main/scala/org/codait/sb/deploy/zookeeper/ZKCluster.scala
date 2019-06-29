@@ -16,7 +16,7 @@ package org.codait.sb.deploy.zookeeper
 import io.fabric8.kubernetes.api.model.Pod
 
 import scala.collection.JavaConverters._
-import org.codait.sb.deploy.{Cluster, ClusterConfig}
+import org.codait.sb.deploy.Cluster
 import org.codait.sb.util.ClusterUtils
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -30,24 +30,25 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
   private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   private def serviceList =
-    kubernetesClient.services().withLabels(Services.labels(prefix)).list().getItems.asScala
+    Cluster.k8sClient.services().withLabels(Services.labels(prefix)).list().getItems.asScala
 
-  val serviceAddress: String = s"${Helpers.zkClientServiceName(prefix)}:${Constants.ZK_CLIENT_PORT}"
+  override def serviceAddresses: Map[String, String] = Map("zookeeper" ->
+    s"${Helpers.zkClientServiceName(prefix)}:${Constants.ZK_CLIENT_PORT}")
 
   private val podsAssigned = ArrayBuffer[Pod]()
 
-  def start(): Unit = {
-    kubernetesClient.services().createOrReplace(Services.clientService(prefix))
-    kubernetesClient.services().createOrReplace(Services.internalService(prefix))
+  override def start(): Unit = {
+    Cluster.k8sClient.services().createOrReplace(Services.clientService(prefix))
+    Cluster.k8sClient.services().createOrReplace(Services.internalService(prefix))
     logger.info("Starting zookeeper services.")
 
     assert(serviceList.size == 2, "'Start Zookeeper services' should be submitted.")
-    val ss = kubernetesClient.apps()
+    val ss = Cluster.k8sClient.apps()
       .statefulSets()
       .createOrReplace(ZKStatefulSet.statefulSet(prefix, clusterConfig.replicaSize))
-    ClusterUtils.waitForClusterUpAndReady(client = kubernetesClient, ss, timeoutSeconds = 20)
+    ClusterUtils.waitForClusterUpAndReady(client = Cluster.k8sClient, ss, timeoutSeconds = 20)
 
-    val pods = kubernetesClient.pods().withLabels(Services.labels(prefix))
+    val pods = Cluster.k8sClient.pods().withLabels(Services.labels(prefix))
       .list().getItems.asScala
 
     podsAssigned.appendAll(pods)
@@ -68,8 +69,8 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
     * @return Returns false in both cases, one it is determined the cluster is not running or,
     *         it could not be ascertained in the given timeout.
     */
-  def isRunning(timeoutSeconds: Int = 5): Boolean = {
-    val serviceList = kubernetesClient.services().list().getItems.asScala
+  override def isRunning(timeoutSeconds: Int = 5): Boolean = {
+    val serviceList = Cluster.k8sClient.services().list().getItems.asScala
 
     val isClientServiceUp =
       serviceList
@@ -81,18 +82,19 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
 
     val ssName = ZKStatefulSet
       .statefulSet(prefix, clusterConfig.replicaSize).getMetadata.getName
-    def ss = kubernetesClient.apps().statefulSets().withName(ssName).get()
+    def ss = Cluster.k8sClient.apps().statefulSets().withName(ssName).get()
 
     isClientServiceUp && isInternalServiceUp &&
       ClusterUtils.waitForClusterUpAndReady(
-        kubernetesClient, ss, timeoutSeconds, false)
+        Cluster.k8sClient, ss, timeoutSeconds, false)
   }
 
-  def stop(): Unit = {
-    kubernetesClient.services().delete(serviceList.asJava)
-    kubernetesClient.apps().statefulSets()
+  override def stop(): Unit = {
+    Cluster.k8sClient.services().delete(serviceList.asJava)
+    Cluster.k8sClient.apps().statefulSets()
       .delete(ZKStatefulSet.statefulSet(prefix, clusterConfig.replicaSize))
   }
 
-  override def getPods: Seq[Pod] = podsAssigned // TODO: make a fresh query to kubernetes, everytime.
+  // TODO: make a fresh query to kubernetes, everytime.
+  override def getPods: Seq[Pod] = podsAssigned
 }

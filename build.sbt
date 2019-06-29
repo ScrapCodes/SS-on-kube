@@ -22,7 +22,7 @@ lazy val sb = project.in(file(".")).settings(
   // To turn off packaging for the empty aggregator project.
   publishArtifact :=  false,
   test := {})
-  .aggregate(deploy, bench)
+  .aggregate(deploy, bench, integrationTests)
 
 lazy val deploy = project
   .in(file("deploy"))
@@ -40,4 +40,11 @@ lazy val bench = project
       libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.3"),
       libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.3"),
       libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
+  )
+
+lazy val integrationTests = project
+  .in(file("integration-tests"))
+  .dependsOn(deploy, bench)
+  .settings(
+    libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )

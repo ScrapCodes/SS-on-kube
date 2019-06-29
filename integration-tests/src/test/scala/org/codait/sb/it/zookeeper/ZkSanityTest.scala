@@ -11,12 +11,13 @@
  * additional information regarding copyright ownership.
  */
 
-package org.codait.sb.deploy.zookeeper
+package org.codait.sb.it.zookeeper
 
 import java.util.UUID
 
-import org.codait.sb.util.{SBConfig, ClusterUtils}
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
+import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
+import org.codait.sb.util.{ClusterUtils, SBConfig}
 import org.scalatest.concurrent.Eventually._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
@@ -30,14 +31,13 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
   private val testingPrefix = s"t${UUID.randomUUID().toString.takeRight(5)}"
 
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3))
+    replicaSize = 3, "default"))
 
   override def beforeAll() {
     zkCluster.start()
     kubernetesClient
     assert(zkCluster.isRunning(20))
   }
-
 
   test("Zookeeper pods are up and initialized properly.") {
     val zkPods = zkCluster.getPods
@@ -64,12 +64,12 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
     // Clean up.
     ClusterUtils.execCommand(pod1, "zkCli.sh delete /hello", kubernetesClient)
     val createCommand = "zkCli.sh create /hello world"
-    // Create an object, "Hello World".
+    // Create an object, "Hello World" at zookeeper Node 1.
     eventually(timeout(3.minutes), interval(30.seconds)) {
       val (result1: String, success: Boolean) =
         ClusterUtils.execCommand(pod1, command = createCommand, kubernetesClient, chkResult = "Created")
       assert(result1.contains("Created /hello"), s"Zookeeper object creation failed.$result1")
-      // Retrieve same object from another pod.
+      // Retrieve same object from another pod or zookeeper node.
       val (result2, success2) =
         ClusterUtils.execCommand(pod2, command = "zkCli.sh get /hello", kubernetesClient, chkResult = "world")
       assert(result2.contains("world"), s"Object could not be retrieved.$result2")

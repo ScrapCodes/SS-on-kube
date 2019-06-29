@@ -11,20 +11,19 @@
  * additional information regarding copyright ownership.
  */
 
-package org.codait.sb.deploy.kafka
+package org.codait.sb.it.kafka
 
 import java.util.UUID
 
-import scala.concurrent.duration._
-
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
-
+import org.codait.sb.deploy.kafka.{KafkaCluster, KafkaClusterConfig}
 import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
-import org.codait.sb.util.{SBConfig, ClusterUtils}
-
-import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
+import org.codait.sb.util.{ClusterUtils, SBConfig}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.slf4j.{Logger, LoggerFactory}
+import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
+
+import scala.concurrent.duration._
 
 
 class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
@@ -36,12 +35,12 @@ class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
   private val testingPrefix = s"t${UUID.randomUUID().toString.takeRight(5)}"
 
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3))
+    replicaSize = 3, "default"))
 
-  private lazy val zookeeperAddress = zkCluster.serviceAddress
+  private def zookeeperAddress = zkCluster.serviceAddresses("zookeeper")
 
   private lazy val kafkaCluster = new KafkaCluster(KafkaClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, zookeeperAddress))
+    replicaSize = 3, zookeeperAddress, startTimeoutSeconds= 120, "default"))
 
   override def beforeAll() {
     super.beforeAll()

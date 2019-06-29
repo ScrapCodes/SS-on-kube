@@ -15,6 +15,7 @@ package org.codait.sb.deploy.zookeeper
 
 import org.codait.sb.deploy.ClusterConfig
 
-case class ZKClusterConfig(override val clusterPrefix: String,
-                           override val replicaSize: Int)
-  extends ClusterConfig(clusterPrefix, replicaSize)
+case class ZKClusterConfig(clusterPrefix: String,
+                           replicaSize: Int,
+                           override val kubernetesNamespace: String)
+  extends ClusterConfig
