@@ -17,15 +17,17 @@ import org.codait.sb.deploy.ClusterConfig
 
 case class SparkJobClusterConfig(name: String,
                                  masterUrl: String,
-                                 deployMode: String,
+                                 sparkDeployMode: String,
                                  className: String,
                                  sparkImage: String,
                                  kubeServiceAccount: String,
                                  pathToJar: String,
                                  numberOfExecutors: Int,
                                  configParams: Map[String, String],
-                                 sparkHome: String,
+                                 sparkHome: Option[String] = None,
                                  packages: Seq[String],
                                  commandArgs: Seq[String],
+                                 sparkDriverPort: Int = 38888,
+                                 sparkBlockManagerPort: Int = 38889,
                                  override val kubernetesNamespace: String)
   extends ClusterConfig

@@ -93,6 +93,32 @@ class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
     }
   }
 
+  test(s"produce and consume a message from kafka topic: t$testingPrefix") {
+    val topic = s"t$testingPrefix"
+    val pods = kafkaCluster.getPods
+    val brokerAddress = kafkaCluster.serviceAddresses("kafka-broker-internal")
+    logger.info(s"Found kafka pods: ${pods.map(_.getMetadata.getName).mkString(", ")}.")
+    val pod1 = pods.head
+    val pod2 = pods.last
+    val sendTestData = s"test-$topic"
+    val sendCommand =
+      s"echo '$sendTestData' | kafka-console-producer.sh --topic $topic --broker-list $brokerAddress"
+    val consumeCommand =
+      s"kafka-console-consumer.sh" +
+        s" --topic $topic" +
+        s" --bootstrap-server $brokerAddress" +
+        s" --from-beginning" +
+        s" --max-messages 1" +
+        s" --timeout-ms 1000"
+
+    eventually(timeout(3.minutes), interval(10.seconds)) {
+      ClusterUtils.execCommand(pod1, sendCommand, kubernetesClient)
+      val (result: String, _) =
+        ClusterUtils.execCommand(pod2, consumeCommand, kubernetesClient)
+      assert(result.contains(sendTestData))
+    }
+  }
+
   override def afterAll(): Unit = {
     zkCluster.stop()
     kafkaCluster.stop()

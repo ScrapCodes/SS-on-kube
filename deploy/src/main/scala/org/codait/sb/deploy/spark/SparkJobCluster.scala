@@ -15,12 +15,13 @@ package org.codait.sb.deploy.spark
 
 import java.io.File
 
-import scala.collection.JavaConverters._
-import scala.io.Source
 import io.fabric8.kubernetes.api.model.Pod
 import org.codait.sb.deploy.Cluster
 import org.codait.sb.util.{ClusterUtils, DeploymentException}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.JavaConverters._
+import scala.io.Source
 
 
 class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends Cluster {
@@ -47,78 +48,38 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
   private var sparkProcess: Option[Process] = None
   private var started: Boolean = false
 
-  private def sparkSubmitCommand(): Seq[String] = {
-    assert(clusterConfig.masterUrl != null, "Master url needs to be specified.")
-
-    val sparkHome: String = clusterConfig.sparkHome
-
-    val kubeConfig: Option[String] =
-      Option(System.getenv("KUBECONFIG"))
-
-    assert(kubeConfig.isDefined,
-      "Please export path to kubernetes config as KUBECONFIG env variable.")
-    // In case a user has set a wrong path to SPARK_HOME.
-    val sparkSubmitPath = sparkHome + "/bin/spark-submit"
-    assert(new File(sparkSubmitPath).exists(),
-      s"Please specify the correct value for spark home, $sparkSubmitPath path not found.")
-
-    val packages: Seq[String] = if (clusterConfig.packages.nonEmpty) {
-      Seq("--packages", clusterConfig.packages.mkString("", ",", ""))
-    } else {
-      Seq()
-    }
-    val sparkSubmitCommand = Seq(sparkSubmitPath,
-      "--master", clusterConfig.masterUrl,
-      "--deploy-mode", clusterConfig.deployMode,
-      "--name", clusterConfig.name,
-      "--class", clusterConfig.className,
-      "--conf", s"spark.executor.instances=${clusterConfig.numberOfExecutors}",
-      "--conf", s"spark.kubernetes.container.image=${clusterConfig.sparkImage}",
-      "--conf",
-      s"spark.kubernetes.authenticate.driver.serviceAccountName=${clusterConfig.kubeServiceAccount}") ++
-    packages ++
-    clusterConfig.configParams.flatMap { x =>
-      Seq("--conf", s"${x._1}=${x._2}")
-    } ++ Seq(clusterConfig.pathToJar) ++ clusterConfig.commandArgs
-
-    sparkSubmitCommand
-  }
+  private val sparkDriverDeploy = new SparkDriverDeploy(clusterConfig)
 
   def start(): Unit = synchronized {
     if (started) {
-      throw new DeploymentException("Already started.")
+      throw new DeploymentException("Already started")
     }
     started = true
-    errorLog.delete()
-    outputLog.delete()
-    logger.info(s"Spark job directs STDERR and STDOUT to $errorLog and $outputLog respectively.")
-    val sparkProcessBuilder: ProcessBuilder = new ProcessBuilder().command(sparkSubmitCommand() :_*)
-      .redirectOutput(outputLog)
-      .redirectError(errorLog)
-      .directory(new File(clusterConfig.sparkHome))
-    logger.info(s"Starting, spark job with command: ${sparkSubmitCommand().mkString(" ")}")
-    sparkProcess = Some(sparkProcessBuilder.start())
-    logger.info("Spark job submitted.")
+    sparkProcess = Some(sparkDriverDeploy.deployLocally(errorLog, outputLog))
   }
 
   def waitUntilSparkDriverCompletes(timeoutSeconds: Int): Boolean = {
-    ClusterUtils.reAttempt(
-      condition = () => parsePodNameFromLogs(errorLog.getAbsolutePath).isDefined,
-      timeoutSeconds = timeoutSeconds,
-      msg = () => s"Unable to parse $errorLog, to retrieve pod name for driver.")
+    val podName = if (clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
+      ClusterUtils.reAttempt(
+        condition = () => parsePodNameFromLogs(errorLog).isDefined,
+        timeoutSeconds = timeoutSeconds,
+        msg = () => s"Unable to parse $errorLog, to retrieve pod name for driver.")
 
-    val podName = parsePodNameFromLogs(errorLog.getAbsolutePath).get
+      val podName = parsePodNameFromLogs(errorLog).get
 
-    logger.info(s"Spark driver pod name: $podName")
-
-    ClusterUtils.reAttempt( timeoutSeconds = timeoutSeconds,
+      logger.info(s"Spark driver pod name: $podName")
+      podName
+    } else {
+      throw new DeploymentException("Deploy locally with client mode is not supported.")
+    }
+    ClusterUtils.reAttempt(timeoutSeconds = timeoutSeconds,
       condition = () => isPodCompleted(podName),
       msg = () => s"Spark driver pod with name: $podName, did not complete in time." +
         s" Current phase: ${getPodPhase(podName)}")
   }
 
-  private def parsePodNameFromLogs(path: String): Option[String] = {
-    val logFile = new File(path)
+  private def parsePodNameFromLogs(path: File): Option[String] = {
+    val logFile = path
     assert(logFile.exists(), s"$logFile does not exists, did spark job ran?")
     val bufferedSource = Source.fromFile(path)
     val strings = bufferedSource.getLines()
@@ -133,16 +94,16 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
   override def serviceAddresses: Map[String, String] = Map()
 
   override def getPods: Seq[Pod] = {
-    if (clusterConfig.deployMode.equalsIgnoreCase("cluster")) {
+    if (clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
       Cluster.k8sClient.pods().list().getItems.asScala
         .filter(_.getMetadata.getName.contains(clusterConfig.name))
     } else {
-      Seq()
+      throw new DeploymentException("Not supported.")
     }
   }
 
   override def stop(): Unit = {
-    if(clusterConfig.deployMode.equalsIgnoreCase("cluster")) {
+    if(clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
       val pods = getPods
       pods.foreach(Cluster.k8sClient.pods().delete(_))
     } else {
@@ -156,7 +117,7 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
 
   override def isRunning(timeoutSeconds: Int): Boolean = {
     def driverPod = getPods.filter(_.getMetadata.getName.contains("driver"))
-    if (clusterConfig.deployMode.equalsIgnoreCase("cluster")) {
+    if (clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
       if (driverPod.exists(x => isPodCompleted(x.getMetadata.getName))) {
         false
       } else {
