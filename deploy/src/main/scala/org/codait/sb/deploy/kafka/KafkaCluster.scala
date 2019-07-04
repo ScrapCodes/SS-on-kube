@@ -74,6 +74,9 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
          |Pods Names: ${pods.map(_.getMetadata.getName).mkString("\n")}
          |
          |Services: ${serviceList.map(_.getMetadata.getName).mkString("\n")}
+         |
+         |Published services:
+         |$serviceAddresses
        """.stripMargin)
   }
 

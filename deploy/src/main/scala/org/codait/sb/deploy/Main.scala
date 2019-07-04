@@ -14,12 +14,11 @@
 package org.codait.sb.deploy
 
 import org.codait.sb.deploy.kafka.KafkaCluster
-import org.codait.sb.deploy.zookeeper.ZKCluster
+import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
 import org.slf4j.{Logger, LoggerFactory}
 
 object Main {
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
-
   def help(): String = {
     """
       |Currently not Implemented.

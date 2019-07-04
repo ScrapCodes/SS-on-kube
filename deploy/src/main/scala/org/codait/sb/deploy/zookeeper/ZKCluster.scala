@@ -59,6 +59,8 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
          |Pods Names: ${pods.map(_.getMetadata.getName).mkString("\n")}
          |
          |Services: ${serviceList.map(_.getMetadata.getName).mkString("\n")}
+         |
+         |Zookeeper service: $serviceAddresses
        """.stripMargin)
   }
 

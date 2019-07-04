@@ -27,13 +27,13 @@ private[spark] class SparkSuiteBase extends FunSuite {
   lazy val k8sClient: NamespacedKubernetesClient =
     new DefaultKubernetesClient().inNamespace(SBConfig.NAMESPACE)
   // TODO: following should be picked up from configuration.
-  val sparkImagePath: String = "scrapcodes/spark:v2.4.0"
+  val sparkImagePath: String = "scrapcodes/spark:v2.4.3"
   val testingPrefix = s"${UUID.randomUUID().toString.takeRight(5)}"
   val testK8sNamespace = "default"
   val serviceAccount = "spark"
-  // val sparkHome = "/Users/prashant/Work/spark-2.4.0-bin-hadoop2.7"
-  val examplesJar = "/opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar"
-  //val localExamplesJar = s"$sparkHome/examples/jars/spark-examples_2.11-2.4.0.jar"
+  // val sparkHome = "/Users/prashant/Work/spark-2.4.3-bin-hadoop2.7"
+  val examplesJar = "/opt/spark/examples/jars/spark-examples_2.11-2.4.3.jar"
+  //val localExamplesJar = s"$sparkHome/examples/jars/spark-examples_2.11-2.4.3.jar"
   val existingKafkaService = ""
   val existingKafkaPodName = ""
 }
