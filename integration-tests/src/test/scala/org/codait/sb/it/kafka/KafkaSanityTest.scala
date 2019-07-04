@@ -40,7 +40,7 @@ class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
   private def zookeeperAddress = zkCluster.serviceAddresses("zookeeper")
 
   private lazy val kafkaCluster = new KafkaCluster(KafkaClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, zookeeperAddress, startTimeoutSeconds= 120, "default"))
+    replicaSize = 3, zookeeperAddress, startTimeoutSeconds = 120, "default"))
 
   override def beforeAll() {
     super.beforeAll()
@@ -59,8 +59,10 @@ class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
     val pod1 = pods.head
     val pod2 = pods.last
     val rf: Integer = kafkaCluster.clusterConfig.replicaSize
+
     def deleteCommand(topic: String) =
       s"kafka-topics.sh --delete --topic $topic --zookeeper $zookeeperAddress"
+
     eventually(timeout(3.minutes), interval(30.seconds)) {
 
       val topic = "test" + testingPrefix
@@ -108,13 +110,12 @@ class KafkaSanityTest extends FunSuite with BeforeAndAfterAll {
         s" --topic $topic" +
         s" --bootstrap-server $brokerAddress" +
         s" --from-beginning" +
-        s" --max-messages 1" +
-        s" --timeout-ms 1000"
+        s" --timeout-ms 2000"
 
-    eventually(timeout(3.minutes), interval(10.seconds)) {
+    eventually(timeout(2.minutes), interval(10.seconds)) {
       ClusterUtils.execCommand(pod1, sendCommand, kubernetesClient)
-      val (result: String, _) =
-        ClusterUtils.execCommand(pod2, consumeCommand, kubernetesClient)
+      val (result: String, s2) =
+        ClusterUtils.execCommand(pod1, consumeCommand, kubernetesClient, chkResult = sendTestData)
       assert(result.contains(sendTestData))
     }
   }

@@ -73,7 +73,7 @@ private[sb] object ClusterUtils {
         .withName(podName)
         .writingOutput(baosOut)
         .writingError(baosErr)
-        .exec("sh", "-c", command)
+        .exec("bash", "-c", command)
 
       def toString(b: Array[Byte]) = new String(b, Charset.forName("UTF-8"))
 

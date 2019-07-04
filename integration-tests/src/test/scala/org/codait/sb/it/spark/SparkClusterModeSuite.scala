@@ -77,8 +77,8 @@ class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
 
     eventually(timeout(3.minutes), interval(20.seconds)) {
       val command = s"echo 'test-$topic' | kafka-console-producer.sh --topic $topic --broker-list $brokerAddress"
-      ClusterUtils.execCommand(kafkaCluster.getPods.head, command, k8sClient)
-
+      val (r, s) = ClusterUtils.execCommand(kafkaCluster.getPods.head, command, k8sClient)
+      assert(s, s"Command $command should execute successfully: $r")
       // The deployer pod becomes the driver in client mode.
       val driverPod = sparkJobCluster.getPods.find(_.getMetadata.getName.contains("deploy")).get
 
