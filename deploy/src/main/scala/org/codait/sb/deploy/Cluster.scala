@@ -36,6 +36,7 @@ trait Cluster {
 }
 
 object Cluster {
+  
   //TODO: Have a proper client factory, which loads all configuration specified by the user.
   private[deploy] lazy val k8sClient: NamespacedKubernetesClient =
     new DefaultKubernetesClient().inNamespace(SBConfig.NAMESPACE)

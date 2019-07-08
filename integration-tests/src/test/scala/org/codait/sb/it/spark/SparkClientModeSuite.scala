@@ -20,6 +20,8 @@ import scala.concurrent.duration._
 
 class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
 
+  import org.codait.sb.it.TestSetup._
+
   test("Run SparkPi example from Spark.") {
 
     val sparkPiClass = "org.apache.spark.examples.SparkPi"
@@ -41,10 +43,11 @@ class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
     eventually(timeout(3.minutes), interval(20.seconds)) {
       val driverPod = sparkJobCluster.getPods.filter(_.getMetadata.getName.contains("driver")).head
       assert(
-        k8sClient
+        kubernetesClient
           .pods().withName(driverPod.getMetadata.getName).getLog.contains("Pi is roughly 3.1"),
         "Should contain the result.")
     }
+    sparkJobCluster.stop()
   }
 
 }

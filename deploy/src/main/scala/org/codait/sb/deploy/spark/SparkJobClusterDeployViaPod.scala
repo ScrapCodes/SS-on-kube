@@ -44,6 +44,7 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
     }
     started = true
     sparkDriverDeployPod = Some(sparkDriverDeploy.deployViaPod(Cluster.k8sClient))
+    logger.info(s"Deployed spark submit pod ${sparkDriverDeployPod.get.getMetadata.getName}")
   }
 
   def waitUntilSparkDriverCompletes(timeoutSeconds: Int): Boolean = {

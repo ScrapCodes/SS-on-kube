@@ -104,6 +104,7 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
     Cluster.k8sClient.services().delete(serviceList.asJava)
     Cluster.k8sClient.apps().statefulSets()
       .delete(KafkaStatefulSet.statefulSet(clusterConfig))
+    podsAssigned.foreach(Cluster.k8sClient.pods().delete(_))
   }
 
   override def getPods: Seq[Pod] = podsAssigned

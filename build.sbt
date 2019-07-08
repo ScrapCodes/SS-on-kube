@@ -30,7 +30,7 @@ lazy val deploy = project
     libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.2",
     libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.2",
     libraryDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.2",
-    libraryDependencies += ("io.fabric8" % "kubernetes-client" % "4.1.x"),
+    libraryDependencies += ("io.fabric8" % "kubernetes-client" % "4.3.0"),
     libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )
 
@@ -46,5 +46,6 @@ lazy val integrationTests = project
   .in(file("integration-tests"))
   .dependsOn(deploy, bench)
   .settings(
+    parallelExecution in Test := true,
     libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )

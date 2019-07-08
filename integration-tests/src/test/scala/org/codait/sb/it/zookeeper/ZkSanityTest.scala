@@ -13,34 +13,19 @@
 
 package org.codait.sb.it.zookeeper
 
-import java.util.UUID
-
-import io.fabric8.kubernetes.client.DefaultKubernetesClient
-import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
-import org.codait.sb.util.{ClusterUtils, SBConfig}
-import org.scalatest.concurrent.Eventually._
+import org.codait.sb.it.TestSetup
+import org.codait.sb.util.ClusterUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.concurrent.Eventually._
 
 import scala.concurrent.duration._
 
 class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
 
-  private lazy val kubernetesClient = new DefaultKubernetesClient()
-    .inNamespace(SBConfig.NAMESPACE)
-
-  private val testingPrefix = s"t${UUID.randomUUID().toString.takeRight(5)}"
-
-  private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, "default"))
-
-  override def beforeAll() {
-    zkCluster.start()
-    kubernetesClient
-    assert(zkCluster.isRunning(20))
-  }
+  import TestSetup._
 
   test("Zookeeper pods are up and initialized properly.") {
-    val zkPods = zkCluster.getPods
+    val zkPods = getZKCluster.getPods
     for (pod <- zkPods) {
       val podName = pod.getMetadata.getName
 
@@ -57,7 +42,7 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("Zookeeper service is running and all the nodes have discovered each other.") {
-    val zkPods = zkCluster.getPods
+    val zkPods = getZKCluster.getPods
     val pod1 = zkPods.head
     val pod2 = zkPods.last
 
@@ -76,7 +61,4 @@ class ZkSanityTest extends FunSuite with BeforeAndAfterAll {
     }
   }
 
-  override def afterAll(): Unit = {
-    zkCluster.stop()
-  }
 }

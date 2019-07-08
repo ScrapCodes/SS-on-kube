@@ -28,7 +28,7 @@ object KafkaStatefulSet {
 
   private def weightedPodAffinityTerm(prefix: String) =
     new WeightedPodAffinityTermBuilder()
-    .withNewWeight(10)
+    .withWeight(10)
     .withPodAffinityTerm(podAffinityTerm(prefix))
     .build()
 

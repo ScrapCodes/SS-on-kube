@@ -46,7 +46,8 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
     val ss = Cluster.k8sClient.apps()
       .statefulSets()
       .createOrReplace(ZKStatefulSet.statefulSet(prefix, clusterConfig.replicaSize))
-    ClusterUtils.waitForClusterUpAndReady(client = Cluster.k8sClient, ss, timeoutSeconds = 20)
+    ClusterUtils.waitForClusterUpAndReady(client = Cluster.k8sClient, ss,
+      timeoutSeconds = clusterConfig.startTimeoutSeconds)
 
     val pods = Cluster.k8sClient.pods().withLabels(Services.labels(prefix))
       .list().getItems.asScala
@@ -95,6 +96,7 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
     Cluster.k8sClient.services().delete(serviceList.asJava)
     Cluster.k8sClient.apps().statefulSets()
       .delete(ZKStatefulSet.statefulSet(prefix, clusterConfig.replicaSize))
+    podsAssigned.foreach(Cluster.k8sClient.pods().delete(_))
   }
 
   // TODO: make a fresh query to kubernetes, everytime.
