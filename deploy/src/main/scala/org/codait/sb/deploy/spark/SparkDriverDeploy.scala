@@ -77,7 +77,7 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       "--conf", "spark.kubernetes.authenticate.caCertFile=" +
         "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
       "--conf",
-      s"spark.kubernetes.authenticate.driver.serviceAccountName=${clusterConfig.kubeServiceAccount}") ++
+      s"spark.kubernetes.authenticate.driver.serviceAccountName=${clusterConfig.serviceAccount}") ++
       packages ++ extraConfigClientMode ++
       clusterConfig.configParams.flatMap { x =>
         Seq("--conf", s"${x._1}=${x._2}")
@@ -122,7 +122,8 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
         .endMetadata()
       .withNewSpec()
       .withRestartPolicy("Never")
-      .withServiceAccountName(clusterConfig.kubeServiceAccount)
+      .withServiceAccountName(clusterConfig.serviceAccount)
+      .withServiceAccount(clusterConfig.serviceAccount)
       .addNewContainer()
         .withName(s"${clusterConfig.name}-container")
         .withImage(clusterConfig.sparkImage)

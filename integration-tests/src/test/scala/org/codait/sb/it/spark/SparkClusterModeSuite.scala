@@ -25,7 +25,6 @@ class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
   import org.codait.sb.it.TestSetup._
 
   private val brokerAddress = getKafkaCluster.serviceAddresses("kafka-broker-internal")
-  private val kafkaPodName = getKafkaCluster.getPods.head.getMetadata.getName
 
   test("Spark streaming kafka.") {
     // This test needs three clusters running in order.
@@ -36,13 +35,13 @@ class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
       sparkDeployMode = "client",
       "org.apache.spark.examples.sql.streaming.StructuredKafkaWordCount",
       sparkImagePath,
-      serviceAccount,
       pathToJar = examplesJar,
       numberOfExecutors = 2,
       Map(),
       packages = Seq("org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0"),
       commandArgs = Seq(brokerAddress, "subscribe", topic),
-      kubernetesNamespace = testK8sNamespace)
+      kubernetesNamespace = testK8sNamespace,
+      serviceAccount = serviceAccount)
     val sparkJobCluster = new SparkJobClusterDeployViaPod(conf)
     sparkJobCluster.start()
     // Since it is a streaming job, the cluster will keep running till we terminate it.

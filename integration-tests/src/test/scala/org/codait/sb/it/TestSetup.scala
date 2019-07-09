@@ -29,12 +29,12 @@ class TestSetup extends FunSuite {
 
   private var started: Boolean = false
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, startTimeoutSeconds = 120, "default"))
+    replicaSize = 3, startTimeoutSeconds = 120, "default", serviceAccount = "spark"))
 
   private def zookeeperAddress = instance.zkCluster.serviceAddresses("zookeeper")
 
   private lazy val kafkaCluster = new KafkaCluster(KafkaClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, getZkAddress, startTimeoutSeconds = 240, "default"))
+    replicaSize = 3, getZkAddress, startTimeoutSeconds = 240, "default", serviceAccount = "spark"))
 
   private def startClusters(): Unit = synchronized {
     if (!started) {

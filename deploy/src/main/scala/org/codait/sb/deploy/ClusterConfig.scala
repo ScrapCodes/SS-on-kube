@@ -15,4 +15,5 @@ package org.codait.sb.deploy
 
 abstract class ClusterConfig {
   val kubernetesNamespace: String
+  val serviceAccount: String
 }

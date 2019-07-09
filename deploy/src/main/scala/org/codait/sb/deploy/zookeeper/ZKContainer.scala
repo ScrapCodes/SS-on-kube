@@ -36,8 +36,8 @@ object ZKContainer {
     .withAmount("2Gi")
     .build()
 
-  private val startCommand = Seq("sh", "-c",
-    Seq("start-zookeeper", "--servers=3",
+  private def startCommand(config: ZKClusterConfig) = Seq("sh", "-c",
+    Seq("start-zookeeper", s"--servers=${config.replicaSize}",
     "--data_dir=/var/lib/zookeeper/data",
     "--data_log_dir=/var/lib/zookeeper/data/log",
     "--conf_dir=/opt/zookeeper/conf",
@@ -61,8 +61,8 @@ object ZKContainer {
   private def readinessProbeCommand =
     Seq("sh", "-c", "zkCli.sh create /test$(date -j \"+%H%M%S\") 1").asJava
 
-  def container(prefix: String): Container = new ContainerBuilder()
-    .withName(Helpers.zkContainerName(prefix))
+  def container(config: ZKClusterConfig): Container = new ContainerBuilder()
+    .withName(Helpers.zkContainerName(config.clusterPrefix))
     .withImage(Constants.ZK_IMAGE)
     .addNewPort()
       .withName("client")
@@ -79,7 +79,7 @@ object ZKContainer {
       .withContainerPort(Constants.ZK_ELECTION_PORT)
       .withProtocol("TCP")
       .endPort()
-    .addAllToCommand(startCommand)
+    .addAllToCommand(startCommand(config))
     .withNewReadinessProbe()
       .withNewExec()
         .addAllToCommand(livenessProbeCommand)

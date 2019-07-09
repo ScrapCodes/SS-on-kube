@@ -13,8 +13,6 @@
 
 package org.codait.sb.deploy
 
-import org.codait.sb.deploy.kafka.KafkaCluster
-import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
 import org.slf4j.{Logger, LoggerFactory}
 
 object Main {

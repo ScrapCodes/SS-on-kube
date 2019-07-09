@@ -16,6 +16,7 @@ package org.codait.sb.it.spark
 import org.codait.sb.deploy.spark.{SparkJobClusterConfig, SparkJobClusterDeployViaPod}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
+
 import scala.concurrent.duration._
 
 class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
@@ -31,13 +32,13 @@ class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
       sparkDeployMode = "cluster",
       sparkPiClass,
       sparkImagePath,
-      serviceAccount,
       pathToJar = examplesJar,
       numberOfExecutors = 2,
       configParams = Map(),
       packages = Seq(),
       commandArgs = Array("100"),
-      kubernetesNamespace = testK8sNamespace))
+      kubernetesNamespace = testK8sNamespace,
+      serviceAccount = serviceAccount))
 
     sparkJobCluster.start()
     eventually(timeout(3.minutes), interval(20.seconds)) {

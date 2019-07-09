@@ -15,8 +15,8 @@ package org.codait.sb.it.zookeeper
 
 import org.codait.sb.it.TestSetup
 import org.codait.sb.util.ClusterUtils
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.scalatest.concurrent.Eventually._
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import scala.concurrent.duration._
 

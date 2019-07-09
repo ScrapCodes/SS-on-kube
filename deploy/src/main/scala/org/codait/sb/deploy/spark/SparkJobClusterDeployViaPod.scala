@@ -25,7 +25,7 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
   private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   private def getPodPhase(podName: String): String =
-    Cluster.k8sClient.pods().withName(podName).get().getStatus.getPhase
+    Cluster.kubernetesClient.pods().withName(podName).get().getStatus.getPhase
 
   // https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
   private def isPodCompleted(podName: String) = {
@@ -43,7 +43,7 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
       throw new DeploymentException("Already started")
     }
     started = true
-    sparkDriverDeployPod = Some(sparkDriverDeploy.deployViaPod(Cluster.k8sClient))
+    sparkDriverDeployPod = Some(sparkDriverDeploy.deployViaPod(Cluster.kubernetesClient))
     logger.info(s"Deployed spark submit pod ${sparkDriverDeployPod.get.getMetadata.getName}")
   }
 
@@ -66,13 +66,13 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
   override def serviceAddresses: Map[String, String] = Map()
 
   override def getPods: Seq[Pod] = {
-    Cluster.k8sClient.pods().list().getItems.asScala
+    Cluster.kubernetesClient.pods().list().getItems.asScala
       .filter(_.getMetadata.getName.contains(clusterConfig.name))
   }
 
   override def stop(): Unit = {
     val pods = getPods
-    pods.foreach(Cluster.k8sClient.pods().delete(_))
+    pods.foreach(Cluster.kubernetesClient.pods().delete(_))
   }
 
   override def isRunning(timeoutSeconds: Int): Boolean = {

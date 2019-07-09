@@ -20,7 +20,6 @@ case class SparkJobClusterConfig(name: String,
                                  sparkDeployMode: String,
                                  className: String,
                                  sparkImage: String,
-                                 kubeServiceAccount: String,
                                  pathToJar: String,
                                  numberOfExecutors: Int,
                                  configParams: Map[String, String],
@@ -29,5 +28,6 @@ case class SparkJobClusterConfig(name: String,
                                  commandArgs: Seq[String],
                                  sparkDriverPort: Int = 38888,
                                  sparkBlockManagerPort: Int = 38889,
-                                 override val kubernetesNamespace: String)
+                                 override val kubernetesNamespace: String,
+                                 override val serviceAccount: String)
   extends ClusterConfig

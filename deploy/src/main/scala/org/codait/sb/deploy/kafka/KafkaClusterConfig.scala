@@ -19,5 +19,6 @@ case class KafkaClusterConfig(clusterPrefix: String,
                               replicaSize: Int,
                               zookeeperAddress: String,
                               startTimeoutSeconds: Int,
-                              override val kubernetesNamespace: String)
+                              override val kubernetesNamespace: String,
+                              override val serviceAccount: String)
   extends ClusterConfig

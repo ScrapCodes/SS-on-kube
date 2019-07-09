@@ -61,6 +61,8 @@ object KafkaStatefulSet {
         .withLabels(Services.labels(config.clusterPrefix))
         .endMetadata()
       .withNewSpec()
+        .withServiceAccount(config.serviceAccount)
+        .withServiceAccountName(config.serviceAccount)
         .withAffinity(affinity(config.clusterPrefix))
         .withContainers(KafkaContainer.container(config.clusterPrefix, config.zookeeperAddress))
         .withSecurityContext(securityContext)

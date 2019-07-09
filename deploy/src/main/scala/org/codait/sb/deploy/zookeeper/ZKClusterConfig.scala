@@ -18,5 +18,6 @@ import org.codait.sb.deploy.ClusterConfig
 case class ZKClusterConfig(clusterPrefix: String,
                            replicaSize: Int,
                            startTimeoutSeconds: Int,
-                           override val kubernetesNamespace: String)
+                           override val kubernetesNamespace: String,
+                           override val serviceAccount: String)
   extends ClusterConfig

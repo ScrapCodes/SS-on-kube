@@ -29,7 +29,7 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
   private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   private def getPodPhase(podName: String): String =
-    Cluster.k8sClient.pods().withName(podName).get().getStatus.getPhase
+    Cluster.kubernetesClient.pods().withName(podName).get().getStatus.getPhase
 
   private def logFile(kind: String): File = {
     val tmpDir = System.getProperty("java.io.tmpdir")
@@ -95,7 +95,7 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
 
   override def getPods: Seq[Pod] = {
     if (clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
-      Cluster.k8sClient.pods().list().getItems.asScala
+      Cluster.kubernetesClient.pods().list().getItems.asScala
         .filter(_.getMetadata.getName.contains(clusterConfig.name))
     } else {
       throw new DeploymentException("Not supported.")
@@ -105,7 +105,7 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
   override def stop(): Unit = {
     if(clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {
       val pods = getPods
-      pods.foreach(Cluster.k8sClient.pods().delete(_))
+      pods.foreach(Cluster.kubernetesClient.pods().delete(_))
     } else {
       if (sparkProcess.isDefined) {
         sparkProcess.get.destroy()
