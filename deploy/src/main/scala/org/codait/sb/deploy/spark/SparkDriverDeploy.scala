@@ -168,5 +168,4 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       .endSpec()
       .build()
   }
-
 }

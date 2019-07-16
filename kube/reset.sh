@@ -3,6 +3,7 @@
 #kubectl get svc
 
 kubectl delete statefulsets --all
+kubectl delete replicasets --all
 kubectl delete poddisruptionbudgets --all
 kubectl delete svc --all
 kubectl delete pods --all

@@ -47,5 +47,7 @@ lazy val integrationTests = project
   .dependsOn(deploy, bench)
   .settings(
     parallelExecution in Test := true,
-    libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
+    libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test"),
+    libraryDependencies += ("com.typesafe.akka" %% "akka-http-testkit" % "10.1.8" % "test"),
+    libraryDependencies += ("com.typesafe.akka" %% "akka-stream-testkit" % "2.5.19" % "test")
   )

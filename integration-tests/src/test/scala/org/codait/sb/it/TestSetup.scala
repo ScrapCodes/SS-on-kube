@@ -26,7 +26,6 @@ class TestSetup extends FunSuite {
   private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   import TestSetup._
-
   private var started: Boolean = false
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
     replicaSize = 3, startTimeoutSeconds = 120, "default", serviceAccount = "spark"))
@@ -46,7 +45,7 @@ class TestSetup extends FunSuite {
     }
   }
 
-  private def stop(): Unit = {
+  private def stop(): Unit = synchronized {
     if (started) {
       instance.started = false
       instance.zkCluster.stop()

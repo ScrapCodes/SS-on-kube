@@ -73,6 +73,11 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
   override def stop(): Unit = {
     val pods = getPods
     pods.foreach(Cluster.kubernetesClient.pods().delete(_))
+    Cluster.kubernetesClient.services()
+      .withName(sparkDriverDeploy.sparkDriverService.getMetadata.getName).delete()
+    Cluster.kubernetesClient.services().list().getItems.asScala
+      .filter(_.getMetadata.getName.contains(clusterConfig.name))
+      .foreach(Cluster.kubernetesClient.services().delete(_))
   }
 
   override def isRunning(timeoutSeconds: Int): Boolean = {
