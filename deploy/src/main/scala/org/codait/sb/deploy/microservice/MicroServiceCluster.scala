@@ -52,6 +52,12 @@ class MicroServiceCluster(override val clusterConfig: MicroServiceClusterConfig)
     Cluster.kubernetesClient.services().createOrReplace(Services.generate(clusterConfig))
     Cluster.kubernetesClient.apps().replicaSets()
       .createOrReplace(MicroServiceReplicaSet.replicaSet(clusterConfig))
+    if (clusterConfig.enableHorizontalPodAutoscaler &&
+      !Cluster.kubernetesClient.getVersion.getMinor.contains("15")) {
+      // Currently not supported for kubernetes version >=1.15
+      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
+        .createOrReplace(MicroServiceReplicaSet.hpa(clusterConfig))
+    }
   }
 
   override def stop(): Unit = {
@@ -60,10 +66,16 @@ class MicroServiceCluster(override val clusterConfig: MicroServiceClusterConfig)
     Cluster.kubernetesClient.services().delete(Services.generate(clusterConfig))
     Cluster.kubernetesClient.pods()
       .withLabels(Services.labels(clusterConfig.clusterPrefix).asJava).delete()
+    if (clusterConfig.enableHorizontalPodAutoscaler &&
+      !Cluster.kubernetesClient.getVersion.getMinor.contains("15")) {
+      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
+        .delete(MicroServiceReplicaSet.hpa(clusterConfig))
+    }
   }
 
   override def isRunning(timeoutSeconds: Int): Boolean = {
-    getPods.exists{ x => x.getStatus.getPhase.equalsIgnoreCase("running") &&
+    getPods.exists { x =>
+      x.getStatus.getPhase.equalsIgnoreCase("running") &&
       x.getStatus.getContainerStatuses.get(0).getReady // since we have only one container.
     }
   }

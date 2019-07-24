@@ -34,6 +34,7 @@ class MicroServiceSuite extends FunSuite with BeforeAndAfterAll {
     val config = MicroServiceClusterConfig(
       clusterPrefix = TestSetup.testingPrefix,
       clusterName = "testing",
+      enableHorizontalPodAutoscaler = true,
       microServiceImage = "codait/max-text-sentiment-classifier",
       namedServicePorts = Map(portName -> 5000),
       serviceAccount = "spark"
