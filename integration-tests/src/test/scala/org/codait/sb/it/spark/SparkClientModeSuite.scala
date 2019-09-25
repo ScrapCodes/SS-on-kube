@@ -13,21 +13,18 @@
 
 package org.codait.sb.it.spark
 
+import org.codait.sb.it.{TestSetup => ts}
 import org.codait.sb.deploy.spark.{SparkJobClusterConfig, SparkJobClusterDeployViaPod}
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
 
 import scala.concurrent.duration._
 
-class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
-
-  import org.codait.sb.it.TestSetup._
+class SparkClientModeSuite extends SparkSuiteBase {
 
   test("Run SparkPi example from Spark.") {
-
     val sparkPiClass = "org.apache.spark.examples.SparkPi"
 
-    val sparkJobCluster = new SparkJobClusterDeployViaPod(SparkJobClusterConfig("spi" + testingPrefix,
+    val sparkJobCluster = new SparkJobClusterDeployViaPod(SparkJobClusterConfig("spi" + ts.testingPrefix,
       s"k8s://https://kubernetes.$testK8sNamespace.svc",
       sparkDeployMode = "cluster",
       sparkPiClass,
@@ -44,7 +41,7 @@ class SparkClientModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
     eventually(timeout(3.minutes), interval(20.seconds)) {
       val driverPod = sparkJobCluster.getPods.filter(_.getMetadata.getName.contains("driver")).head
       assert(
-        kubernetesClient
+        ts.kubernetesClient
           .pods().withName(driverPod.getMetadata.getName).getLog.contains("Pi is roughly 3.1"),
         "Should contain the result.")
     }

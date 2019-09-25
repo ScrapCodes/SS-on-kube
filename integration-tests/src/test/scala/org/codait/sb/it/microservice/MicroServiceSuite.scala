@@ -17,7 +17,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, _}
 import org.codait.sb.deploy.microservice.{MicroServiceCluster, MicroServiceClusterConfig}
-import org.codait.sb.it.TestSetup
+import org.codait.sb.it.{TestBase, TestSetup => ts}
 import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.slf4j.{Logger, LoggerFactory}
@@ -26,13 +26,14 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.util.{Failure, Success}
 
-class MicroServiceSuite extends FunSuite with BeforeAndAfterAll {
+class MicroServiceSuite extends TestBase {
+
   private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   test("Evaluate a ML model from IBM MAX repo.") {
     val portName = "rest"
     val config = MicroServiceClusterConfig(
-      clusterPrefix = TestSetup.testingPrefix,
+      clusterPrefix = ts.testingPrefix,
       clusterName = "testing",
       enableHorizontalPodAutoscaler = true,
       microServiceImage = "codait/max-text-sentiment-classifier",

@@ -13,9 +13,9 @@
 
 package org.codait.sb.it.spark
 
-import org.scalatest.FunSuite
+import org.codait.sb.it.TestBase
 
-private[spark] class SparkSuiteBase extends FunSuite {
+private[spark] class SparkSuiteBase extends TestBase {
   // TODO: following should be picked up from configuration.
   val sparkImagePath: String = "scrapcodes/spark:v2.4.3"
   val testK8sNamespace = "default"

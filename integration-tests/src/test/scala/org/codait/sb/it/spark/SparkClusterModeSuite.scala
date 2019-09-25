@@ -13,24 +13,22 @@
 
 package org.codait.sb.it.spark
 
+import org.codait.sb.it.{TestSetup => ts }
 import org.codait.sb.deploy.spark.{SparkJobClusterConfig, SparkJobClusterDeployViaPod}
 import org.codait.sb.util.ClusterUtils
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
 
 import scala.concurrent.duration._
 
-class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
+class SparkClusterModeSuite extends SparkSuiteBase {
 
-  import org.codait.sb.it.TestSetup._
-
-  private val brokerAddress = getKafkaCluster.serviceAddresses("kafka-broker-internal")
+  private lazy val brokerAddress = ts.getKafkaCluster.serviceAddresses("kafka-broker-internal")
 
   test("Spark streaming kafka.") {
     // This test needs three clusters running in order.
-    val topic = s"spark$testingPrefix"
+    val topic = s"spark${ts.testingPrefix}"
 
-    val conf = SparkJobClusterConfig("s2" + testingPrefix,
+    val conf = SparkJobClusterConfig("s2" + ts.testingPrefix,
       s"k8s://https://kubernetes.$testK8sNamespace.svc",
       sparkDeployMode = "client",
       "org.apache.spark.examples.sql.streaming.StructuredKafkaWordCount",
@@ -51,12 +49,12 @@ class SparkClusterModeSuite extends SparkSuiteBase with BeforeAndAfterAll {
     eventually(timeout(3.minutes), interval(20.seconds)) {
       val command =
         s"echo 'test-$topic' | kafka-console-producer.sh --topic $topic --broker-list $brokerAddress"
-      val (r, s) = ClusterUtils.execCommand(getKafkaCluster.getPods.head, command, kubernetesClient)
+      val (r, s) = ClusterUtils.execCommand(ts.getKafkaCluster.getPods.head, command, ts.kubernetesClient)
       assert(s, s"Command $command should execute successfully: $r")
       // The deployer pod becomes the driver in client mode.
       val driverPod = sparkJobCluster.getPods.find(_.getMetadata.getName.contains("deploy")).get
 
-      val fetchedDriverLog = kubernetesClient.pods().withName(driverPod.getMetadata.getName).getLog
+      val fetchedDriverLog = ts.kubernetesClient.pods().withName(driverPod.getMetadata.getName).getLog
 
       assert(fetchedDriverLog.contains(s"test-$topic"), "Should contain the result.")
     }

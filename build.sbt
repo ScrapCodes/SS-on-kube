@@ -13,7 +13,7 @@
 
 ThisBuild / organization := "org.codait"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / resolvers    += Resolver.mavenLocal
 
 lazy val sb = project.in(file(".")).settings(
