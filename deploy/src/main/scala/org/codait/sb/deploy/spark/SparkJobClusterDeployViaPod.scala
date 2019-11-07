@@ -14,7 +14,7 @@
 package org.codait.sb.deploy.spark
 
 import io.fabric8.kubernetes.api.model.Pod
-import org.codait.sb.deploy.Cluster
+import org.codait.sb.deploy.{Cluster, ServiceAddresses}
 import org.codait.sb.util.{ClusterUtils, DeploymentException}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -63,7 +63,7 @@ class SparkJobClusterDeployViaPod (override val clusterConfig: SparkJobClusterCo
         s" Current phase: ${getPodPhase(podName.get)}")
   }
 
-  override def serviceAddresses: Map[String, String] = Map()
+  override def serviceAddresses: Array[ServiceAddresses] = Array()
 
   override def getPods: Seq[Pod] = {
     Cluster.kubernetesClient.pods().list().getItems.asScala

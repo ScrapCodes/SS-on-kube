@@ -14,7 +14,7 @@
 package org.codait.sb.deploy.zookeeper
 
 import io.fabric8.kubernetes.api.model.Pod
-import org.codait.sb.deploy.Cluster
+import org.codait.sb.deploy.{Address, Cluster, ServiceAddresses}
 import org.codait.sb.util.ClusterUtils
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -31,8 +31,10 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
   private def serviceList =
     Cluster.kubernetesClient.services().withLabels(Services.labels(prefix)).list().getItems.asScala
 
-  override def serviceAddresses: Map[String, String] = Map("zookeeper" ->
-    s"${Helpers.zkClientServiceName(prefix)}:${Constants.ZK_CLIENT_PORT}")
+  override def serviceAddresses: Array[ServiceAddresses] = {
+    Array(ServiceAddresses(
+      internalAddress = Some(Address(Helpers.zkClientServiceName(prefix), Constants.ZK_CLIENT_PORT))))
+  }
 
   private val podsAssigned = ArrayBuffer[Pod]()
 
@@ -60,7 +62,7 @@ class ZKCluster(override val clusterConfig: ZKClusterConfig) extends Cluster {
          |
          |Services: ${serviceList.map(_.getMetadata.getName).mkString("\n")}
          |
-         |Zookeeper service: $serviceAddresses
+         |Zookeeper service: ${serviceAddresses.mkString(",")}
        """.stripMargin)
   }
 

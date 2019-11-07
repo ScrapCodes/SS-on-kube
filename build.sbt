@@ -13,7 +13,7 @@
 
 ThisBuild / organization := "org.codait"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.10"
+ThisBuild / scalaVersion := "2.11.10"
 ThisBuild / resolvers    += Resolver.mavenLocal
 
 lazy val sb = project.in(file(".")).settings(
@@ -22,7 +22,7 @@ lazy val sb = project.in(file(".")).settings(
   // To turn off packaging for the empty aggregator project.
   publishArtifact :=  false,
   test := {})
-  .aggregate(deploy, bench, integrationTests)
+  .aggregate(deploy, bench, integrationTests, demo)
 
 lazy val deploy = project
   .in(file("deploy"))
@@ -30,16 +30,23 @@ lazy val deploy = project
     libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.2",
     libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.2",
     libraryDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.2",
-    libraryDependencies += ("io.fabric8" % "kubernetes-client" % "4.3.0"),
+    libraryDependencies += ("io.fabric8" % "kubernetes-client" % "4.1.2"),
     libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )
 
 lazy val bench = project
   .in(file("bench"))
   .settings(
-      libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.3"),
-      libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.3"),
+      libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.4"),
+      libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.4"),
       libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
+  )
+
+lazy val demo = project
+  .in(file("demo"))
+  .dependsOn(deploy, bench)
+  .settings(
+    libraryDependencies += ("com.googlecode.json-simple" % "json-simple" % "1.1")
   )
 
 lazy val integrationTests = project

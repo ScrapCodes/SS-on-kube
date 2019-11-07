@@ -14,7 +14,7 @@
 package org.codait.sb.deploy.kafka
 
 import io.fabric8.kubernetes.api.model.Pod
-import org.codait.sb.deploy.Cluster
+import org.codait.sb.deploy.{Address, Cluster, ServiceAddresses}
 import org.codait.sb.util.ClusterUtils
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -36,14 +36,17 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
       Services.brokerService(prefix).getMetadata.getName)
   }
 
-  override def serviceAddresses: Map[String, String] = {
+  override def serviceAddresses: Array[ServiceAddresses] = {
     assert(isRunning(5), "Kafka service is not running.")
-    Map("kafka-broker-internal" ->
-      s"${Helpers.kafkaServiceName(prefix)}:${Constants.KAFKA_BROKER_PORT}",
-      "kafka-broker-external" ->
-        (s"${KafkaStatefulSet.statefulSet(clusterConfig).getMetadata.getName}-0" +
-          s".${Helpers.kafkaServiceName(prefix)}.${clusterConfig.kubernetesNamespace}.svc.cluster.local:" +
-          s"${Services.getNodePort(brokerService().get)}"))
+    Array(ServiceAddresses(
+      internalAddress =
+        Some(Address(Helpers.kafkaServiceName(prefix), Constants.KAFKA_BROKER_PORT)),
+      externalAddress =
+        Some(Address(
+          host = s"${KafkaStatefulSet.statefulSet(clusterConfig).getMetadata.getName}-0" +
+            s".${Helpers.kafkaServiceName(prefix)}.${clusterConfig.kubernetesNamespace}" +
+            s".svc.cluster.local",
+          port = Services.getNodePort(brokerService().get)))))
   }
 
   private val podsAssigned = ArrayBuffer[Pod]()
@@ -74,7 +77,7 @@ class KafkaCluster(override val clusterConfig: KafkaClusterConfig)  extends Clus
          |Services: ${serviceList.map(_.getMetadata.getName).mkString("\n")}
          |
          |Published services:
-         |$serviceAddresses
+         |${serviceAddresses.mkString(",")}
        """.stripMargin)
   }
 

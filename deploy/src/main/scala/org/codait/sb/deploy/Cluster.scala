@@ -22,7 +22,7 @@ trait Cluster {
   /**
     * Addresses of the services exposed by this cluster.
     */
-  def serviceAddresses: Map[String, String]
+  def serviceAddresses: Array[ServiceAddresses]
 
   val clusterConfig: ClusterConfig
 

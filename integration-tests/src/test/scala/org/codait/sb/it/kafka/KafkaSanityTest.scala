@@ -69,7 +69,7 @@ class KafkaSanityTest extends TestBase {
   test(s"produce and consume a message from kafka topic: t${ts.testingPrefix}") {
     val topic = s"t${ts.testingPrefix}"
     val pods = ts.getKafkaCluster.getPods
-    val brokerAddress = ts.getKafkaCluster.serviceAddresses("kafka-broker-internal")
+    val brokerAddress = ts.getKafkaCluster.serviceAddresses.head.internalAddress.get.toString
     logger.info(s"Found kafka pods: ${pods.map(_.getMetadata.getName).mkString(", ")}.")
     val pod1 = pods.head
     val pod2 = pods.last

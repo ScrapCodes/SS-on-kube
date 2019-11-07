@@ -13,11 +13,11 @@
 
 package org.codait.sb.deploy.kafka
 
-import org.codait.sb.deploy.ClusterConfig
+import org.codait.sb.deploy.{Address, ClusterConfig}
 
 case class KafkaClusterConfig(clusterPrefix: String,
                               replicaSize: Int,
-                              zookeeperAddress: String,
+                              zookeeperAddress: Address,
                               startTimeoutSeconds: Int,
                               override val kubernetesNamespace: String,
                               override val serviceAccount: String)

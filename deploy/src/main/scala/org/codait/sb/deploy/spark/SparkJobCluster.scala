@@ -16,7 +16,7 @@ package org.codait.sb.deploy.spark
 import java.io.File
 
 import io.fabric8.kubernetes.api.model.Pod
-import org.codait.sb.deploy.Cluster
+import org.codait.sb.deploy.{Cluster, ServiceAddresses}
 import org.codait.sb.util.{ClusterUtils, DeploymentException}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -33,7 +33,8 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
 
   private def logFile(kind: String): File = {
     val tmpDir = System.getProperty("java.io.tmpdir")
-    assert(new File(tmpDir).exists(), "property java.io.tmpdir points to an inexistent dir.")
+    assert(new File(tmpDir).exists(), "property java.io.tmpdir points to" +
+      " a non-existent directory.")
     new File(tmpDir + s"/spark_${clusterConfig.name}_$kind.log")
   }
 
@@ -66,7 +67,6 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
         msg = () => s"Unable to parse $errorLog, to retrieve pod name for driver.")
 
       val podName = parsePodNameFromLogs(errorLog).get
-
       logger.info(s"Spark driver pod name: $podName")
       podName
     } else {
@@ -91,7 +91,7 @@ class SparkJobCluster(override val clusterConfig: SparkJobClusterConfig) extends
     }
   }
 
-  override def serviceAddresses: Map[String, String] = Map()
+  override def serviceAddresses: Array[ServiceAddresses] = Array()
 
   override def getPods: Seq[Pod] = {
     if (clusterConfig.sparkDeployMode.equalsIgnoreCase("cluster")) {

@@ -69,6 +69,7 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       "--deploy-mode", clusterConfig.sparkDeployMode,
       "--name", clusterConfig.name,
       "--class", clusterConfig.className,
+      "--conf", "spark.kubernetes.container.image.pullPolicy=Always",
       "--conf", s"spark.kubernetes.namespace=${clusterConfig.kubernetesNamespace}",
       "--conf", s"spark.executor.instances=${clusterConfig.numberOfExecutors}",
       "--conf", s"spark.kubernetes.container.image=${clusterConfig.sparkImage}",
@@ -127,7 +128,7 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       .addNewContainer()
         .withName(s"${clusterConfig.name}-container")
         .withImage(clusterConfig.sparkImage)
-        .withImagePullPolicy("IfNotPresent")
+        .withImagePullPolicy("Always")
         .withCommand(sparkSubmitCommand(containerMode = true).asJava)
         .addNewPort()
           .withName(driverPortName)

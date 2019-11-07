@@ -16,6 +16,8 @@ package org.codait.sb.it
 import java.util.UUID
 
 import io.fabric8.kubernetes.client.{DefaultKubernetesClient, KubernetesClient}
+
+import org.codait.sb.deploy.Address
 import org.codait.sb.deploy.kafka.{KafkaCluster, KafkaClusterConfig}
 import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
 import org.codait.sb.util.SBConfig
@@ -30,7 +32,8 @@ class TestSetup extends FunSuite {
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
     replicaSize = 3, startTimeoutSeconds = 200, "default", serviceAccount = "spark"))
 
-  private def zookeeperAddress = instance.zkCluster.serviceAddresses("zookeeper")
+  private def zookeeperAddress: Address =
+    instance.zkCluster.serviceAddresses.head.internalAddress.get
 
   private lazy val kafkaCluster = new KafkaCluster(KafkaClusterConfig(clusterPrefix = testingPrefix,
     replicaSize = 3, getZkAddress, startTimeoutSeconds = 300, "default", serviceAccount = "spark"))
@@ -39,7 +42,8 @@ class TestSetup extends FunSuite {
     if (!started) {
       instance.started = true
       instance.zkCluster.start()
-      instance.zkCluster.isRunning(60)
+      assert(instance.zkCluster.isRunning(360),
+        "Could not start zookeeper.")
       instance.kafkaCluster.start()
     } else {
       logger.warn("All the cluster are already started.")
@@ -49,19 +53,12 @@ class TestSetup extends FunSuite {
   private def stop(): Unit = synchronized {
     if (started) {
       instance.started = false
+      // TODO: Is there a way, that we do not need to block here.
       instance.zkCluster.stop()
       instance.kafkaCluster.stop()
     } else {
-      logger.warn("Cluster not started.")
+      logger.warn("Kafka and Zookeeper cluster not started.")
     }
-  }
-
-  test("Zookeeper service is running.") {
-    assert(instance.zkCluster.isRunning(5))
-  }
-
-  test("Kafka service is up and running.") {
-    assert(instance.kafkaCluster.isRunning(5))
   }
 
 }
@@ -91,5 +88,5 @@ object TestSetup {
 
   def getZKCluster: ZKCluster = instance.zkCluster
 
-  def getZkAddress: String = instance.zookeeperAddress
+  def getZkAddress: Address = instance.zookeeperAddress
 }

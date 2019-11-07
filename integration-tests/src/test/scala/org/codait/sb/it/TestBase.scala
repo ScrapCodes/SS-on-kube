@@ -16,9 +16,11 @@ package org.codait.sb.it
 import org.codait.sb.it.{TestSetup => ts}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
-class TestBase extends FunSuite with BeforeAndAfterAll {
+class TestBase(kafka: Boolean = true) extends FunSuite with BeforeAndAfterAll {
   override def beforeAll(): Unit = {
     super.beforeAll()
-    ts.init()
+    if (kafka) {
+      ts.init()
+    }
   }
 }
