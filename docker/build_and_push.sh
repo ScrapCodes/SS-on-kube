@@ -15,5 +15,5 @@
 # limitations under the License.
 
 sbt package
-docker build -t scrapcodes/spark:v2.4.4-sb -f docker/Dockerfile .
-docker push scrapcodes/spark:v2.4.4-sb
+docker build -t scrapcodes/spark:v2.4.4-sb-1 -f docker/Dockerfile .
+docker push scrapcodes/spark:v2.4.4-sb-1

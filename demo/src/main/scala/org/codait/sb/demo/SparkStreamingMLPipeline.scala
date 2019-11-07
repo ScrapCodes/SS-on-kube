@@ -19,16 +19,16 @@ import java.util.UUID
 import scala.io.Source
 import scala.collection.JavaConverters._
 import java.io.IOException
+import java.util.regex.Pattern
+
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
-
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
@@ -37,6 +37,8 @@ import scala.collection.mutable
 
 /**
   * 1. Load from kafka
+  * 2. For each tweet evaluate sentiment by querying the MAX restful service.
+  * 3. Print the results and statistics on console.
   */
 object SparkStreamingMLPipeline {
 
@@ -85,6 +87,16 @@ object SparkStreamingMLPipeline {
     tweetText
   }
 
+  def parseAirlineName(tweet: String): String = {
+    val pattern = Pattern.compile(".*?@(\\w+)\\s+.*")
+    val m = pattern.matcher(tweet.replaceAll("\"", ""))
+    if (m.find()) {
+      m.group(1)
+    } else {
+      "can't tell"
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder.appName("SparkMLPipeline").getOrCreate()
     import spark.implicits._
@@ -104,12 +116,24 @@ object SparkStreamingMLPipeline {
       val resp = post(s"${args(2)}", tweetJson, client)
       (parseTweetJson(tweetJson, parser), parseResponseJson(resp, parser))
     }
-    val df = tweetSentiment
+    val tweetStats =
+      tweetSentiment.map(x => (parseAirlineName(x._1), x._1, x._2))
+        .toDF("airline", "tweet", "sentiment")
+        .select('airline, 'tweet, 'sentiment).agg('airline)
+    val df = tweetSentiment.toDF("tweet", "sentiment")
+      .writeStream
+      .format("console")
+      .option("truncate", "false")
+      .start()
+
+    val df2 = tweetStats
       .writeStream
       .format("console")
       .option("truncate", "false")
       .start()
     df.awaitTermination()
+    df2.awaitTermination()
     df.stop()
+    df2.stop()
   }
 }
