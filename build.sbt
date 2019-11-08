@@ -38,7 +38,7 @@ lazy val demo = project
   .in(file("demo"))
   .dependsOn(deploy)
   .settings(
-    // Since spark 2.4.4 uses okttp 3.8.1
+    // Since spark 2.4.4 uses okttp 3.8.1, we are forced to use it too.
     libraryDependencies += ("com.squareup.okhttp3" % "okhttp" % "3.8.1"),
     libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.4"),
     libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.4"),

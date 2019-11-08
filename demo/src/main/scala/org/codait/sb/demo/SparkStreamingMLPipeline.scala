@@ -84,9 +84,11 @@ object SparkStreamingMLPipeline {
   }
 
   def parseAirlineName(tweet: String): String = {
+    val set = Set("southwest", "united", "virginamerica", "jetblue", "delta", "usairways",
+    "americanair")
     val regex = ".*?@(\\w+)\\s+.*".r
     val m = regex.pattern.matcher(tweet.replaceAll("\"", ""))
-    if (m.find()) {
+    if (m.find() && set.contains(m.group(1))) {
       m.group(1)
     } else {
       "can't tell"
@@ -107,6 +109,8 @@ object SparkStreamingMLPipeline {
       .load()
       .selectExpr("CAST(value AS STRING)")
       .as[String]
+    // TODO: We are querying each tweet one by one, we can speed up by
+    // using bulk query instead.
     val tweetSentiment = tweetDataset.map { tweetJson =>
       val client = new OkHttpClient()
       val parser = new JSONParser()
@@ -121,14 +125,14 @@ object SparkStreamingMLPipeline {
 
     val df = tweetSentiment.toDF("tweet", "sentiment")
       .writeStream
-      .trigger(Trigger.ProcessingTime("5 seconds"))
+      .trigger(Trigger.ProcessingTime("15 seconds"))
       .format("console")
       .option("truncate", "false")
       .start()
 
     val df2 = tweetStats
       .writeStream
-      .trigger(Trigger.ProcessingTime("5 seconds"))
+      .trigger(Trigger.ProcessingTime("15 seconds"))
       .outputMode(OutputMode.Complete())
       .format("console")
       .option("truncate", "false")

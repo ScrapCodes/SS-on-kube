@@ -52,7 +52,7 @@ object KubeDeployDemo {
     val microServiceClusterConfig = MicroServiceClusterConfig(
       clusterPrefix = clusterPrefix,
       clusterName = "text-senti-classify",
-      enableHorizontalPodAutoscaler = false, // required for kubernetes v1.12.x
+      initialReplicaSize = 3,
       microServiceImage = "codait/max-text-sentiment-classifier",
       namedServicePorts = Map("rest" -> 5000),
       serviceAccount = "spark"
@@ -110,7 +110,7 @@ object KubeDeployDemo {
         className = "org.codait.sb.demo.SparkStreamingMLPipeline",
         sparkImage = sparkImage,
         pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
-        numberOfExecutors = 1,
+        numberOfExecutors = 2,
         configParams = Map(("spark.jars.ivy" -> "/tmp/.ivy"),
           // Job output is lost in logging statements, so turning off.
           ("spark.driver.extraJavaOptions" ->
