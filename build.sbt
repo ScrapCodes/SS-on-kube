@@ -22,7 +22,7 @@ lazy val sb = project.in(file(".")).settings(
   // To turn off packaging for the empty aggregator project.
   publishArtifact :=  false,
   test := {})
-  .aggregate(deploy, bench, integrationTests, demo)
+  .aggregate(deploy, integrationTests, demo)
 
 lazy val deploy = project
   .in(file("deploy"))
@@ -34,24 +34,21 @@ lazy val deploy = project
     libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
   )
 
-lazy val bench = project
-  .in(file("bench"))
-  .settings(
-      libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.4"),
-      libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.4"),
-      libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
-  )
-
 lazy val demo = project
   .in(file("demo"))
-  .dependsOn(deploy, bench)
+  .dependsOn(deploy)
   .settings(
+    // Since spark 2.4.4 uses okttp 3.8.1
+    libraryDependencies += ("com.squareup.okhttp3" % "okhttp" % "3.8.1"),
+    libraryDependencies += ("org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.4"),
+    libraryDependencies += ("org.apache.spark" %% "spark-sql" % "2.4.4"),
+    libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test"),
     libraryDependencies += ("com.googlecode.json-simple" % "json-simple" % "1.1")
   )
 
 lazy val integrationTests = project
   .in(file("integration-tests"))
-  .dependsOn(deploy, bench)
+  .dependsOn(deploy)
   .settings(
     parallelExecution in Test := true,
     libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test"),

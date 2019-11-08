@@ -5,10 +5,10 @@
 
 1. A one click deployment, using kubernetes, Apache kafka and Apache Spark structured streaming.
 
-2. Online evaluation of various images using a pre build model for Object Recognition.
+2. Online evaluation of text sentiment using a pre build model for Text sentiment analysis.
 
 3. For model serving there are many tools available, since the whole 
-   pipeline is running inside kubernetes, we will use something that can run inside a container.
+   pipeline is running inside kubernetes, we will use IBM MAX(Model Asset Exchange).
 
 4. There is also a plan to build a nice UI that displays running stats.
 
@@ -16,7 +16,7 @@
 
 1. Project is divided into 3 sub modules. i.e.
     
-    a. **bench** - a set of benchmark helpers. This is where we will keep our spark streaming
+    a. **demo** - a set of benchmark helpers. This is where we will keep our spark streaming
         job for object detection from incoming images.
     
     b. **deploy** - a set of kubernetes utilities to deploy the spark, kafka and zookeeper

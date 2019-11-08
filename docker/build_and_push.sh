@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set -ex
 
 sbt package
 docker build -t scrapcodes/spark:v2.4.4-sb-1 -f docker/Dockerfile .

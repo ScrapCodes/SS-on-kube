@@ -34,6 +34,7 @@ object KubeDeployDemo {
   private val k8sNameSpace = "default"
   private val clusterPrefix = s"demo-${UUID.randomUUID().toString.take(4)}"
   private val sparkVersion: String = "2.4.4"
+  private val sparkImage = s"scrapcodes/spark:v$sparkVersion-sb-1"
 
   def main(args: Array[String]): Unit = {
     /*
@@ -88,7 +89,7 @@ object KubeDeployDemo {
         masterUrl = s"k8s://https://kubernetes.$k8sNameSpace.svc",
         sparkDeployMode = "client",
         className = "org.codait.sb.demo.SparkStreamingDataGenerator",
-        sparkImage = s"scrapcodes/spark:v$sparkVersion-sb-1",
+        sparkImage = sparkImage,
         pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
         numberOfExecutors = 1,
         configParams = Map("spark.jars.ivy" -> "/tmp/.ivy"),
@@ -107,7 +108,7 @@ object KubeDeployDemo {
         masterUrl = s"k8s://https://kubernetes.$k8sNameSpace.svc",
         sparkDeployMode = "client",
         className = "org.codait.sb.demo.SparkStreamingMLPipeline",
-        sparkImage = s"scrapcodes/spark:v$sparkVersion-sb-1",
+        sparkImage = sparkImage,
         pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
         numberOfExecutors = 1,
         configParams = Map(("spark.jars.ivy" -> "/tmp/.ivy"),

@@ -13,27 +13,23 @@
 
 package org.codait.sb.demo
 
-import java.sql.Timestamp
 import java.util.UUID
 
-import scala.io.Source
 import scala.collection.JavaConverters._
 import java.io.IOException
-import java.util.regex.Pattern
 
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
-import okhttp3.Response
+
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
-import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.mutable
+import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+import org.apache.spark.sql.SparkSession
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * 1. Load from kafka
@@ -88,8 +84,8 @@ object SparkStreamingMLPipeline {
   }
 
   def parseAirlineName(tweet: String): String = {
-    val pattern = Pattern.compile(".*?@(\\w+)\\s+.*")
-    val m = pattern.matcher(tweet.replaceAll("\"", ""))
+    val regex = ".*?@(\\w+)\\s+.*".r
+    val m = regex.pattern.matcher(tweet.replaceAll("\"", ""))
     if (m.find()) {
       m.group(1)
     } else {
@@ -98,7 +94,8 @@ object SparkStreamingMLPipeline {
   }
 
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder.appName("SparkMLPipeline").getOrCreate()
+    val spark = SparkSession.builder.appName("SparkMLPipeline")
+      .getOrCreate()
     import spark.implicits._
     val tweetDataset = spark
       .readStream
@@ -116,18 +113,23 @@ object SparkStreamingMLPipeline {
       val resp = post(s"${args(2)}", tweetJson, client)
       (parseTweetJson(tweetJson, parser), parseResponseJson(resp, parser))
     }
+
     val tweetStats =
-      tweetSentiment.map(x => (parseAirlineName(x._1), x._1, x._2))
+      tweetSentiment.map(x => (parseAirlineName(x._1).toLowerCase, x._1, x._2))
         .toDF("airline", "tweet", "sentiment")
-        .select('airline, 'tweet, 'sentiment).agg('airline)
+        .groupBy('airline, 'sentiment).count()
+
     val df = tweetSentiment.toDF("tweet", "sentiment")
       .writeStream
+      .trigger(Trigger.ProcessingTime("5 seconds"))
       .format("console")
       .option("truncate", "false")
       .start()
 
     val df2 = tweetStats
       .writeStream
+      .trigger(Trigger.ProcessingTime("5 seconds"))
+      .outputMode(OutputMode.Complete())
       .format("console")
       .option("truncate", "false")
       .start()
