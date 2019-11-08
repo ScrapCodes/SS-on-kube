@@ -18,6 +18,7 @@ import org.codait.sb.deploy.ClusterConfig
 case class MicroServiceClusterConfig(clusterPrefix: String,
                                      clusterName: String,
                                      initialReplicaSize: Int = 1,
+                                     maxReplicaSize: Int = 5, // works with HPA on.
                                      enableHorizontalPodAutoscaler: Boolean = false,
                                      microServiceImage: String,
                                      containerCommand: Option[Seq[String]] = None,
