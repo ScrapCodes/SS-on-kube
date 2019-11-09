@@ -84,11 +84,17 @@ object SparkStreamingMLPipeline {
   }
 
   def parseAirlineName(tweet: String): String = {
-    val set = Set("southwest", "united", "virginamerica", "jetblue", "delta", "usairways",
+    val set = Set("southwestair",
+      "united",
+      "virginamerica",
+      "jetblue",
+      "delta",
+      "usairways",
     "americanair")
+
     val regex = ".*?@(\\w+)\\s+.*".r
     val m = regex.pattern.matcher(tweet.replaceAll("\"", ""))
-    if (m.find() && set.contains(m.group(1))) {
+    if (m.find() && set.contains(m.group(1).toLowerCase)) {
       m.group(1)
     } else {
       "can't tell"
@@ -125,15 +131,17 @@ object SparkStreamingMLPipeline {
 
     val df = tweetSentiment.toDF("tweet", "sentiment")
       .writeStream
-      .trigger(Trigger.ProcessingTime("15 seconds"))
+      .trigger(Trigger.Continuous("5 seconds"))
       .format("console")
+      .option("checkpointLocation", s"/tmp/${UUID.randomUUID()}")
       .option("truncate", "false")
       .start()
 
     val df2 = tweetStats
       .writeStream
-      .trigger(Trigger.ProcessingTime("15 seconds"))
-      .outputMode(OutputMode.Complete())
+      .trigger(Trigger.ProcessingTime("12 seconds"))
+      .outputMode(OutputMode.Update())
+      .option("checkpointLocation", s"/tmp/${UUID.randomUUID()}")
       .format("console")
       .option("truncate", "false")
       .start()

@@ -45,12 +45,15 @@ object SparkStreamingDataGenerator {
     import spark.implicits._
     val broadcastTweetDataMap = spark.sparkContext.broadcast(immutableMap)
     val getTweet = udf((j: Long) => Seq(broadcastTweetDataMap.value(j)))
+    val getRandomTweet = udf((j: Long) =>
+      Seq(broadcastTweetDataMap.value((scala.math.random * 10000000).toLong % tweetCount)))
+
     val tweetStream = spark.readStream.format("rate")
-      .option("rowsPerSecond", "5")
+      .option("rowsPerSecond", "1")
       .option("numPartitions", "2")
       .option("rampUpTime", "1s")
       .load()
-      .select(getTweet('value % tweetCount) as 'text)
+      .select(getRandomTweet('value % tweetCount) as 'text)
 
     val df = tweetStream.select(current_timestamp() as 'key,
       to_json(struct("*")) as 'value)
