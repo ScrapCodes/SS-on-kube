@@ -60,7 +60,7 @@ To run the tests, first you need to configure them, provide a service account wi
 Please take a look at the individual tests and the `TestBase` and `SparkSuiteBase` classes.
 
 Run them by `sbt test`
-#### Running [demo](#demo)
+#### Running Demo
 
 1. Run on minikube or single node k8s cluster.(WIP)
 _Please note: Currently does not run on minikube, minikube instructions to be added soon._ 
@@ -69,19 +69,19 @@ _Please note: Currently does not run on minikube, minikube instructions to be ad
 We need a kubernetes cluster with sufficient available resources to run the demo. Minimally
  it should have 3 nodes , at the moment demo will only work against a real 3 node cluster 
  and not minikube. The cluster should have minimally 14 cores available and 20 GiB of memory free.
-The reason is:
+ The reason is:
+ 
+    a. Zookeeper service also run with 3 pods, each with resource requirement of 0.5 cpu and 1GiB
+      memory per node. Each pod is configured with anti-affinity, so that each pod runs on a separate
+      node. Hence the requirement for 3 node cluster arises. This is done, to accomplish resilience. 
 
-a) Zookeeper service also run with 3 pods, each with resource requirement of 0.5 cpu and 1GiB
-memory per node. Each pod is configured with anti-affinity, so that each pod runs on a separate
-node. Hence the requirement for 3 node cluster arises. This is done, to accomplish resilience. 
+    b. Kafka service runs 3 pods, each with resource requirement of 1 cpu and 2GiB memory per node.
 
-b) Kafka service runs 3 pods, each with resource requirement of 1 cpu and 2GiB memory per node.
+    c. IBM MAX, service runs 2 instances of itself, and has minimum requirement of 1GiB memory and
+      1.5 cpu per node.
 
-c) IBM MAX, service runs 2 instances of itself, and has minimum requirement of 1GiB memory and
- 1.5 cpu per node.
-
-d) Apache spark (as of version 2.4.4) by default uses 1.5 GiB of memory and 1 cpu by default for 
-both driver and executor, unless configured to be something else.
+    d. Apache spark (as of version 2.4.4) by default uses 1.5 GiB of memory and 1 cpu by default for 
+      both driver and executor, unless configured to be something else.
 
 So estimating the requirements, we would need a kubernetes cluster with 3 nodes and 14 free
  cpu cores and 20 GiB memory. That is like enormous amount of resources for a demo !, but 
