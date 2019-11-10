@@ -19,7 +19,7 @@ private [kafka]
 object KafkaContainer {
 
   private val cpuQuantityRequest = new QuantityBuilder()
-    .withAmount("2")
+    .withAmount("1")
     .build()
 
   private val memoryQuantityRequest = new QuantityBuilder()
@@ -27,11 +27,11 @@ object KafkaContainer {
     .build()
 
   private val cpuQuantityLimit = new QuantityBuilder()
-    .withAmount("4")
+    .withAmount("2")
     .build()
 
   private val memoryQuantityLimit = new QuantityBuilder()
-    .withAmount("8Gi")
+    .withAmount("4Gi")
     .build()
 
   private val allowPlainTextEnvVar = new EnvVarBuilder()

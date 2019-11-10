@@ -31,8 +31,6 @@ class SparkClusterModeSuite extends SparkSuiteBase {
       sparkImagePath,
       pathToJar = examplesJar,
       numberOfExecutors = 2,
-      configParams = Map(),
-      packages = Seq(),
       commandArgs = Array("100"),
       kubernetesNamespace = testK8sNamespace,
       serviceAccount = serviceAccount))

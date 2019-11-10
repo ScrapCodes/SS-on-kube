@@ -52,7 +52,7 @@ object KubeDeployDemo {
     val microServiceClusterConfig = MicroServiceClusterConfig(
       clusterPrefix = clusterPrefix,
       clusterName = "text-senti-classify",
-      initialReplicaSize = 3,
+      initialReplicaSize = 2,
       microServiceImage = "codait/max-text-sentiment-classifier",
       namedServicePorts = Map("rest" -> 5000),
       serviceAccount = "spark"

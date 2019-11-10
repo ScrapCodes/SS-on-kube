@@ -39,7 +39,7 @@ class MicroServiceSuite extends TestBase(false) {
       enableHorizontalPodAutoscaler = false, // required for kubernetes v1.12.x
       microServiceImage = "codait/max-text-sentiment-classifier",
       namedServicePorts = Map(portName -> 5000),
-      serviceAccount = "spark"
+      serviceAccount = serviceAccount
     )
     cluster = new MicroServiceCluster(config)
     cluster.start()

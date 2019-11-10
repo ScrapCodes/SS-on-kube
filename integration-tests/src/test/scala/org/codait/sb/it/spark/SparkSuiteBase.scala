@@ -20,7 +20,5 @@ private[spark] class SparkSuiteBase extends TestBase {
   val sparkVersion: String = "2.4.4"
   val sparkKafkaPackage: String = "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4"
   val sparkImagePath: String = s"scrapcodes/spark:v$sparkVersion"
-  val testK8sNamespace = "default"
-  val serviceAccount = "spark"
   val examplesJar = s"/opt/spark/examples/jars/spark-examples_2.11-$sparkVersion.jar"
 }

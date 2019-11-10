@@ -78,9 +78,9 @@ object MicroServiceContainer {
 
     containerBuilder.editOrNewResources()
       .addToRequests("memory", quantity("1Gi"))
-      .addToLimits("memory", quantity("4Gi"))
-      .addToRequests("cpu", quantity("2"))
-      .addToLimits("cpu", quantity("4"))
+      .addToLimits("memory", quantity("2Gi"))
+      .addToRequests("cpu", quantity("1.5"))
+      .addToLimits("cpu", quantity("2"))
       .endResources()
   }
 

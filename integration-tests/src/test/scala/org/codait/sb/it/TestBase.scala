@@ -13,14 +13,16 @@
 
 package org.codait.sb.it
 
-import org.codait.sb.it.{TestSetup => ts}
+import org.codait.sb.it.TestSetup
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 class TestBase(kafka: Boolean = true) extends FunSuite with BeforeAndAfterAll {
+  val testK8sNamespace = "default"
+  val serviceAccount = "spark"
   override def beforeAll(): Unit = {
     super.beforeAll()
     if (kafka) {
-      ts.init()
+      TestSetup.init()
     }
   }
 }

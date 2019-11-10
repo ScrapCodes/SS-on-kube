@@ -36,7 +36,6 @@ class SparkClientModeSuite extends SparkSuiteBase {
       sparkImagePath,
       pathToJar = examplesJar,
       numberOfExecutors = 2,
-      Map(),
       packages = Seq("org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4"),
       commandArgs = Seq(brokerAddress, "subscribe", topic),
       kubernetesNamespace = testK8sNamespace,

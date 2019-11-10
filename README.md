@@ -10,38 +10,100 @@
 3. For model serving there are many tools available, since the whole 
    pipeline is running inside kubernetes, we will use IBM MAX(Model Asset Exchange).
 
-4. There is also a plan to build a nice UI that displays running stats.
+4. There is also a plan to build a nice UI that displays running stats. (WIP)
 
 ## Project Structure
 
 1. Project is divided into 3 sub modules. i.e.
     
-    a. **demo** - a set of benchmark helpers. This is where we will keep our spark streaming
-        job for object detection from incoming images.
+    a. **demo** - an end to end ml pipeline, using Apache Spark structured streaming,
+     kubernetes, kafka and IBM MAX.
     
     b. **deploy** - a set of kubernetes utilities to deploy the spark, kafka and zookeeper
-        clusters.
+        clusters. One of the goals of this module is to make writing an end to end
+         pipelines as easy as providing some configuration and say start. More on this in 
+         upcoming section, how to write cool demos.
     
     c. **integration-tests** - Integration tests, for validating our deployment and benchmark
         automation.
     
 2. There is also a plan to add a UI module, but that depends on our bandwidth.
 
-## STATUS: WORK IN PROGRESS.
+## STATUS: READY TO TRY.
 
 Currently, we have got automated deployment for kafka, zookeeper and spark clusters.
-As of now, spark cluster supports running only the cluster mode for deployment.
-Next we would like to run an end to end streaming pipeline with standard kafka example. 
+ We also have an end to end demo, which is ready to try, residing in `demo/` directory.
+ See the instructions below, in [usage](#usage) section to run the demo. 
 
 ### Usage
 
-This is a sbt project, you can compile code with `sbt compile` and run it
-with `sbt run`.
+This is a sbt project, you can install sbt from [here](https://www.scala-sbt.org/download.html).
 
+#### Configure the service account
+
+This step is applicable for both for running the tests or demo.
+
+For working with just the defaults, which is the easiest way to try it out. You can use the 
+`default` namespace on kubernetes and create a service account `spark` as follows.
+
+```shell script
+kubectl create serviceaccount spark
+kubectl create clusterrolebinding spark-role --clusterrole=edit \
+     --serviceaccount=default:spark --namespace=default
+```
+
+#### Tests
 Tests include most of the code examples and usages.
 
-To run the tests, first you need to configure them. Please take a look at the individual tests.
+To run the tests, first you need to configure them, provide a service account with correct
+ RBAC permission and a namespace.
+Please take a look at the individual tests and the `TestBase` and `SparkSuiteBase` classes.
+
 Run them by `sbt test`
+#### Running [demo](#demo)
+
+1. Run on minikube or single node k8s cluster.(WIP)
+_Please note: Currently does not run on minikube, minikube instructions to be added soon._ 
+
+2. Run on a real cluster with atleast 3 nodes.
+We need a kubernetes cluster with sufficient available resources to run the demo. Minimally
+ it should have 3 nodes , at the moment demo will only work against a real 3 node cluster 
+ and not minikube. The cluster should have minimally 14 cores available and 20 GiB of memory free.
+The reason is:
+
+a) Zookeeper service also run with 3 pods, each with resource requirement of 0.5 cpu and 1GiB
+memory per node. Each pod is configured with anti-affinity, so that each pod runs on a separate
+node. Hence the requirement for 3 node cluster arises. This is done, to accomplish resilience. 
+
+b) Kafka service runs 3 pods, each with resource requirement of 1 cpu and 2GiB memory per node.
+
+c) IBM MAX, service runs 2 instances of itself, and has minimum requirement of 1GiB memory and
+ 1.5 cpu per node.
+
+d) Apache spark (as of version 2.4.4) by default uses 1.5 GiB of memory and 1 cpu by default for 
+both driver and executor, unless configured to be something else.
+
+So estimating the requirements, we would need a kubernetes cluster with 3 nodes and 14 free
+ cpu cores and 20 GiB memory. That is like enormous amount of resources for a demo !, but 
+ the point of the demo is to demonstrate the use of these components together and since
+ each of these components are designed with intention to scale to a large number of nodes.
+ This initial demo can be converted into a large scale end to end ML pipeline, with just 
+ some configuration changes. For example, simply changing the replica counts of different
+ services and increasing the executor count in spark.
+ 
+2. Setup service accounts:
+Please follow the instruction from the section 
+[Configure the service account](#configure-the-service-account).
+
+3. Clone this repository.
+```shell script
+git clone https://github.com/ScrapCodes/SS-on-kube.git
+cd SS-on-kube/
+```
+4. Run the demo.
+```shell script
+sbt "demo/runMain org.codait.sb.demo.deploy.KubeDeployDemo"
+```
 
 ### Thanks!
 
