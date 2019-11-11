@@ -13,9 +13,9 @@
 
 package org.codait.sb.demo.deploy
 
-import java.nio.file.Paths
 import java.util.UUID
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient
 import org.codait.sb.deploy.Address
 import org.codait.sb.deploy.kafka.{KafkaCluster, KafkaClusterConfig}
 import org.codait.sb.deploy.microservice.{MicroServiceCluster, MicroServiceClusterConfig}
@@ -48,11 +48,19 @@ object KubeDeployDemo {
      --serviceaccount=default:spark --namespace=default
     */
 
+    // Support single node cluster e.g. minikube.
+      val client = new DefaultKubernetesClient()
+    val replicaCounts = if( client.nodes().list().getItems.size() < 3) {
+        1
+      } else {
+        3
+      }
+
     // Create Microservice serving the ML model using MAX on Kubernetes.
     val microServiceClusterConfig = MicroServiceClusterConfig(
       clusterPrefix = clusterPrefix,
       clusterName = "text-senti-classify",
-      initialReplicaSize = 2,
+      initialReplicaSize = 1,
       microServiceImage = "codait/max-text-sentiment-classifier",
       namedServicePorts = Map("rest" -> 5000),
       serviceAccount = "spark"
@@ -62,7 +70,7 @@ object KubeDeployDemo {
 
     // Start a 3 node zookeeper service for kafka.
     val zkClusterConfig = ZKClusterConfig(clusterPrefix,
-      3, startTimeoutSeconds = 300, k8sNameSpace, serviceAccount)
+      replicaCounts, startTimeoutSeconds = 300, k8sNameSpace, serviceAccount)
     val zkCluster = new ZKCluster(zkClusterConfig)
     zkCluster.start()
     assert(zkCluster.isRunning(360))
@@ -72,7 +80,7 @@ object KubeDeployDemo {
     val zkAddress: Address = zkCluster.serviceAddresses.head.internalAddress.get
     val kafkaClusterConfig =
       KafkaClusterConfig(clusterPrefix,
-        3, zkAddress, startTimeoutSeconds = 300, k8sNameSpace, serviceAccount)
+        replicaCounts, zkAddress, startTimeoutSeconds = 300, k8sNameSpace, serviceAccount)
     val kafkaCluster = new KafkaCluster(kafkaClusterConfig)
     kafkaCluster.start()
     assert(kafkaCluster.isRunning(360))
@@ -110,7 +118,7 @@ object KubeDeployDemo {
         className = "org.codait.sb.demo.SparkStreamingMLPipeline",
         sparkImage = sparkImage,
         pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
-        numberOfExecutors = 2,
+        numberOfExecutors = 1,
         configParams = Map(("spark.jars.ivy" -> "/tmp/.ivy"),
           // Job output is lost in logging statements, so turning off.
           ("spark.driver.extraJavaOptions" ->

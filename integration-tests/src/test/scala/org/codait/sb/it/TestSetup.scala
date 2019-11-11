@@ -30,13 +30,13 @@ class TestSetup extends FunSuite {
   import TestSetup._
   private var started: Boolean = false
   private val zkCluster = new ZKCluster(ZKClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, startTimeoutSeconds = 200, "default", serviceAccount = "spark"))
+    replicaSize = 1, startTimeoutSeconds = 200, "default", serviceAccount = "spark"))
 
   private def zookeeperAddress: Address =
     instance.zkCluster.serviceAddresses.head.internalAddress.get
 
   private lazy val kafkaCluster = new KafkaCluster(KafkaClusterConfig(clusterPrefix = testingPrefix,
-    replicaSize = 3, getZkAddress, startTimeoutSeconds = 300, "default", serviceAccount = "spark"))
+    replicaSize = 1, getZkAddress, startTimeoutSeconds = 300, "default", serviceAccount = "spark"))
 
   private def startClusters(): Unit = synchronized {
     if (!started) {
@@ -80,8 +80,11 @@ object TestSetup {
   }
 
   Runtime.getRuntime.addShutdownHook({
-    new Thread(() =>
-      instance.stop())
+    new Thread() {
+      override def run(): Unit = {
+        instance.stop()
+      }
+    }
   })
 
   def getKafkaCluster: KafkaCluster = instance.kafkaCluster

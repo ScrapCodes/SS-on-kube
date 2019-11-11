@@ -62,13 +62,21 @@ Please take a look at the individual tests and the `TestBase` and `SparkSuiteBas
 Run them by `sbt test`
 #### Running Demo
 
-1. Run on minikube or single node k8s cluster.(WIP)
-_Please note: Currently does not run on minikube, minikube instructions to be added soon._ 
+1. Prepare kubernetes cluster. 
 
-2. Run on a real cluster with atleast 3 nodes.
+##### Alternative 1.
+Run on minikube or single node k8s cluster.
+
+        Start minikube with kubernetes version as 1.12.7
+        
+        ```shell script
+         minikube start --kubernetes-version=1.12.7
+        ```
+        
+##### Alternative 2.
+ Run on a real cluster with atleast 3 nodes. (supported k8s version: 1.12.7)
 We need a kubernetes cluster with sufficient available resources to run the demo. Minimally
- it should have 3 nodes , at the moment demo will only work against a real 3 node cluster 
- and not minikube. The cluster should have minimally 14 cores available and 20 GiB of memory free.
+ it should have 3 nodes. The cluster should have minimally 14 cores available and 20 GiB of memory free.
  The reason is:
  
     a. Zookeeper service also run with 3 pods, each with resource requirement of 0.5 cpu and 1GiB
@@ -83,13 +91,14 @@ We need a kubernetes cluster with sufficient available resources to run the demo
     d. Apache spark (as of version 2.4.4) by default uses 1.5 GiB of memory and 1 cpu by default for 
       both driver and executor, unless configured to be something else.
 
-So estimating the requirements, we would need a kubernetes cluster with 3 nodes and 14 free
+Estimating the requirements, we would need a kubernetes cluster with 3 nodes and 14 free
  cpu cores and 20 GiB memory. That is like enormous amount of resources for a demo !, but 
- the point of the demo is to demonstrate the use of these components together and since
+ the purpose of the demo is to demonstrate the use of these components together and since
  each of these components are designed with intention to scale to a large number of nodes.
  This initial demo can be converted into a large scale end to end ML pipeline, with just 
  some configuration changes. For example, simply changing the replica counts of different
- services and increasing the executor count in spark.
+ services and increasing the executor count in spark. See alternative 1, for running with
+ minimum resources, locally e.g. laptop.
  
 2. Setup service accounts:
 Please follow the instruction from the section 
