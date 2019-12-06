@@ -44,36 +44,36 @@ object MicroServiceReplicaSet {
     .endPodAntiAffinity()
     .build()
 
-  private def hpaMetrics =  new MetricSpecBuilder()
-    .withType("Resource")
-    .withNewResource()
-      .withName("cpu")
-      .withTargetAverageUtilization(50)
-      .endResource()
-    .build()
-
-  def hpa(config: MicroServiceClusterConfig): HorizontalPodAutoscaler = {
-
-    val name = s"${config.clusterPrefix}-${config.clusterName}"
-    new HorizontalPodAutoscalerBuilder()
-      .withApiVersion("autoscaling/v2beta2")
-      .withKind("HorizontalPodAutoscaler")
-      .withNewMetadata()
-        .withName(name)
-        .withLabels(Services.labels(config.clusterPrefix).asJava)
-        .endMetadata()
-      .withNewSpec()
-        .withMaxReplicas(config.maxReplicaSize)
-        .withMinReplicas(config.initialReplicaSize)
-        .withNewScaleTargetRef()
-          .withApiVersion("apps/v1")
-          .withKind("ReplicaSet")
-          .withName(name)
-          .endScaleTargetRef()
-      .withMetrics(hpaMetrics)
-      .endSpec()
-      .build()
-  }
+//  private def hpaMetrics =  new MetricSpecBuilder()
+//    .withType("Resource")
+//    .withNewResource()
+//      .withName("cpu")
+//      .withTargetAverageUtilization(50)
+//      .endResource()
+//    .build()
+//
+//  def hpa(config: MicroServiceClusterConfig): HorizontalPodAutoscaler = {
+//
+//    val name = s"${config.clusterPrefix}-${config.clusterName}"
+//    new HorizontalPodAutoscalerBuilder()
+//      .withApiVersion("autoscaling/v2beta2")
+//      .withKind("HorizontalPodAutoscaler")
+//      .withNewMetadata()
+//        .withName(name)
+//        .withLabels(Services.labels(config.clusterPrefix).asJava)
+//        .endMetadata()
+//      .withNewSpec()
+//        .withMaxReplicas(config.maxReplicaSize)
+//        .withMinReplicas(config.initialReplicaSize)
+//        .withNewScaleTargetRef()
+//          .withApiVersion("apps/v1")
+//          .withKind("ReplicaSet")
+//          .withName(name)
+//          .endScaleTargetRef()
+//      .withMetrics(hpaMetrics)
+//      .endSpec()
+//      .build()
+//  }
 
   def replicaSet(config: MicroServiceClusterConfig): ReplicaSet = {
     val name = s"${config.clusterPrefix}-${config.clusterName}"

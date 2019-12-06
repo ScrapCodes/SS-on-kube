@@ -13,17 +13,21 @@
 # limitations under the License.
 
 
-FROM scrapcodes/spark:v2.4.4
+FROM scrapcodes/spark:v3.0.0-preview
 
-RUN set -ex && \
-    mkdir /opt/jars/
+ARG spark_uid=185
 
-COPY demo/target/scala-2.11/demo_2.11-0.1.0-SNAPSHOT.jar /opt/jars/
-COPY docker/*properties /opt/jars/
+# RUN set -ex && \
+#     mkdir -p /opt/jars/
+
+COPY demo/target/scala-2.12/demo_2.12-0.1.0-SNAPSHOT.jar /opt/
+COPY docker/*properties /opt/
 
 ENV SPARK_HOME /opt/spark
 
 WORKDIR /opt/spark/work-dir
-RUN chmod g+w /opt/spark/work-dir
 
 ENTRYPOINT [ "/opt/entrypoint.sh" ]
+
+USER ${spark_uid}
+

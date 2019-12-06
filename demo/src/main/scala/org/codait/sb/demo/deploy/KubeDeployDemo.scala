@@ -21,6 +21,7 @@ import org.codait.sb.deploy.kafka.{KafkaCluster, KafkaClusterConfig}
 import org.codait.sb.deploy.microservice.{MicroServiceCluster, MicroServiceClusterConfig}
 import org.codait.sb.deploy.spark.{SparkJobClusterConfig, SparkJobClusterDeployViaPod}
 import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Entire demo is orchestrated here. Spark jobs are already deployed to docker image and
@@ -29,11 +30,12 @@ import org.codait.sb.deploy.zookeeper.{ZKCluster, ZKClusterConfig}
   * there is an update to spark job.
   */
 object KubeDeployDemo {
+  private val logger: Logger = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
 
   private val serviceAccount = "spark"
   private val k8sNameSpace = "default"
   private val clusterPrefix = s"demo-${UUID.randomUUID().toString.take(4)}"
-  private val sparkVersion: String = "2.4.4"
+  private val sparkVersion: String = "3.0.0-preview"
   private val sparkImage = s"scrapcodes/spark:v$sparkVersion-sb-1"
 
   def main(args: Array[String]): Unit = {
@@ -55,7 +57,7 @@ object KubeDeployDemo {
       } else {
         3
       }
-
+    logger.info(s"Starting a $replicaCounts node(s) cluster.")
     // Create Microservice serving the ML model using MAX on Kubernetes.
     val microServiceClusterConfig = MicroServiceClusterConfig(
       clusterPrefix = clusterPrefix,
@@ -98,11 +100,11 @@ object KubeDeployDemo {
         sparkDeployMode = "client",
         className = "org.codait.sb.demo.SparkStreamingDataGenerator",
         sparkImage = sparkImage,
-        pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
+        pathToJar = s"local:///opt/demo_2.12-0.1.0-SNAPSHOT.jar",
         numberOfExecutors = 1,
         configParams = Map("spark.jars.ivy" -> "/tmp/.ivy"),
         sparkHome = None,
-        packages = Seq(s"org.apache.spark:spark-sql-kafka-0-10_2.11:$sparkVersion"),
+        packages = Seq(s"org.apache.spark:spark-sql-kafka-0-10_2.12:$sparkVersion"),
         commandArgs = Seq(kafkaBrokerAddress, kafkaTopic),
         kubernetesNamespace = k8sNameSpace,
         serviceAccount = serviceAccount)
@@ -117,14 +119,14 @@ object KubeDeployDemo {
         sparkDeployMode = "client",
         className = "org.codait.sb.demo.SparkStreamingMLPipeline",
         sparkImage = sparkImage,
-        pathToJar = s"local:///opt/jars/demo_2.11-0.1.0-SNAPSHOT.jar",
-        numberOfExecutors = 1,
+        pathToJar = s"local:///opt/demo_2.12-0.1.0-SNAPSHOT.jar",
+        numberOfExecutors = 2,
         configParams = Map(("spark.jars.ivy" -> "/tmp/.ivy"),
           // Job output is lost in logging statements, so turning off.
           ("spark.driver.extraJavaOptions" ->
-          "-Dlog4j.configuration=file:///opt/jars/error-only-log4j.properties")),
+          "-Dlog4j.configuration=file:///opt/error-only-log4j.properties")),
         sparkHome = None,
-        packages = Seq(s"org.apache.spark:spark-sql-kafka-0-10_2.11:$sparkVersion",
+        packages = Seq(s"org.apache.spark:spark-sql-kafka-0-10_2.12:$sparkVersion",
           "com.googlecode.json-simple:json-simple:1.1"),
         commandArgs = Seq(kafkaBrokerAddress, kafkaTopic, restAddress),
         kubernetesNamespace = k8sNameSpace,

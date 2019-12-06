@@ -57,7 +57,7 @@ class TestSetup extends FunSuite {
       instance.zkCluster.stop()
       instance.kafkaCluster.stop()
     } else {
-      logger.warn("Kafka and Zookeeper cluster not started.")
+      logger.info("Kafka and Zookeeper cluster was not started.")
     }
   }
 

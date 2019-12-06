@@ -24,7 +24,8 @@ class ZkSanityTest extends TestBase {
   test("Zookeeper pods are up and initialized properly.") {
     val zkPods = ts.getZKCluster.getPods
     assert(zkPods.nonEmpty)
-    for (pod <- zkPods) {
+
+    for (pod <- zkPods; if zkPods.size > 1) { // Not valid test for single node Zk cluster.
       val podName = pod.getMetadata.getName
 
       val (_, podOrdinal) = podName.splitAt(podName.indexOf('-') + 1)

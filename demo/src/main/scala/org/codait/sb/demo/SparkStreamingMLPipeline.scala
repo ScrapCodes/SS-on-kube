@@ -140,7 +140,8 @@ object SparkStreamingMLPipeline {
     val df2 = tweetStats
       .writeStream
       .trigger(Trigger.ProcessingTime("12 seconds"))
-      .outputMode(OutputMode.Update())
+      .outputMode(OutputMode.Complete()) // Since DSv2 does not have update mode,
+      // complete mode will result in lot of recomputation of results. TODO: fix this.
       .option("checkpointLocation", s"/tmp/${UUID.randomUUID()}")
       .format("console")
       .option("truncate", "false")

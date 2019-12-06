@@ -29,15 +29,17 @@ class SparkClientModeSuite extends SparkSuiteBase {
     // This test needs three clusters running in order.
     val topic = s"spark${ts.testingPrefix}"
 
-    val conf = SparkJobClusterConfig("s2" + ts.testingPrefix,
-      s"k8s://https://kubernetes.$testK8sNamespace.svc",
+    val conf = SparkJobClusterConfig(
+      name = "s2" + ts.testingPrefix,
+      masterUrl = s"k8s://https://kubernetes.$testK8sNamespace.svc",
       sparkDeployMode = "client",
-      "org.apache.spark.examples.sql.streaming.StructuredKafkaWordCount",
-      sparkImagePath,
+      className = "org.apache.spark.examples.sql.streaming.StructuredKafkaWordCount",
+      sparkImage = sparkImagePath,
       pathToJar = examplesJar,
       numberOfExecutors = 2,
-      packages = Seq("org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4"),
+      packages = Seq(sparkKafkaPackage),
       commandArgs = Seq(brokerAddress, "subscribe", topic),
+      imagePullPolicy = "IfNotPresent",
       kubernetesNamespace = testK8sNamespace,
       serviceAccount = serviceAccount)
     val sparkJobCluster = new SparkJobClusterDeployViaPod(conf)

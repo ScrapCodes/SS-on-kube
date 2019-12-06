@@ -34,20 +34,21 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
     assert(clusterConfig.masterUrl != null, "Master url needs to be specified.")
 
     val sparkHome: Option[String] = clusterConfig.sparkHome
-
-    val kubeConfig: Option[String] =
-      Option(System.getenv("KUBECONFIG"))
-
-    assert(kubeConfig.isDefined,
-      "Please export path to kubernetes config as KUBECONFIG env variable.")
+// TODO: This check fails when running against minikube.
+//    val kubeConfig: Option[String] =
+//      Option(System.getenv("KUBECONFIG"))
+//
+//    assert(kubeConfig.isDefined,
+//      "Please export path to kubernetes config as KUBECONFIG env variable.")
     val sparkSubmitPath = if (containerMode) {
-      "/opt/spark/bin/spark-submit"
+      // Init the container and run spark submit.
+      Seq("/opt/entrypoint.sh", "/opt/spark/bin/spark-submit")
     } else {
       // In case a user has set a wrong path to SPARK_HOME.
       val sparkSubmitPath = sparkHome.get + "/bin/spark-submit"
       assert(new File(sparkSubmitPath).exists(),
         s"Please specify the correct value for spark home, $sparkSubmitPath path not found.")
-      sparkSubmitPath
+      Seq(sparkSubmitPath)
     }
     val packages: Seq[String] = if (clusterConfig.packages.nonEmpty) {
       Seq("--packages", clusterConfig.packages.mkString("", ",", ""))
@@ -59,17 +60,18 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
         Seq("--conf", s"spark.driver.port=${clusterConfig.sparkDriverPort}",
           "--conf", s"spark.driver.blockManager.port=${clusterConfig.sparkBlockManagerPort}",
           "--conf", s"spark.kubernetes.driver.pod.name=$driverPodName",
-         "--conf", s"spark.driver.host=" +
+          "--conf", s"spark.driver.host=" +
             s"$sparkDriverServiceName.${clusterConfig.kubernetesNamespace}.svc")
       } else {
         Seq()
       }
-    val sparkSubmitCommand = Seq(sparkSubmitPath,
+    val sparkSubmitCommand = sparkSubmitPath ++ Seq(
       "--master", clusterConfig.masterUrl,
       "--deploy-mode", clusterConfig.sparkDeployMode,
       "--name", clusterConfig.name,
       "--class", clusterConfig.className,
-      "--conf", "spark.kubernetes.container.image.pullPolicy=Always",
+      "--conf", "spark.jars.ivy=/tmp/.ivy",
+      "--conf", s"spark.kubernetes.container.image.pullPolicy=${clusterConfig.imagePullPolicy}",
       "--conf", s"spark.kubernetes.namespace=${clusterConfig.kubernetesNamespace}",
       "--conf", s"spark.executor.instances=${clusterConfig.numberOfExecutors}",
       "--conf", s"spark.kubernetes.container.image=${clusterConfig.sparkImage}",
@@ -85,6 +87,7 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       } ++ Seq(clusterConfig.pathToJar) ++ clusterConfig.commandArgs
 
     sparkSubmitCommand
+    // Seq("sleep", "1h")
   }
 
   // Needs spark distribution configured as spark home.
@@ -128,7 +131,7 @@ class SparkDriverDeploy(clusterConfig: SparkJobClusterConfig) {
       .addNewContainer()
         .withName(s"${clusterConfig.name}-container")
         .withImage(clusterConfig.sparkImage)
-        .withImagePullPolicy("Always")
+        .withImagePullPolicy(clusterConfig.imagePullPolicy)
         .withCommand(sparkSubmitCommand(containerMode = true).asJava)
         .addNewPort()
           .withName(driverPortName)

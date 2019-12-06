@@ -16,5 +16,5 @@
 set -ex
 
 sbt package
-docker build -t scrapcodes/spark:v2.4.4-sb-1 -f docker/Dockerfile .
-docker push scrapcodes/spark:v2.4.4-sb-1
+docker build -t scrapcodes/spark:v3.0.0-preview-sb-1 -f docker/Dockerfile .
+docker push scrapcodes/spark:v3.0.0-preview-sb-1

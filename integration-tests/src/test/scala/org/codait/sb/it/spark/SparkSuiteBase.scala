@@ -15,10 +15,10 @@ package org.codait.sb.it.spark
 
 import org.codait.sb.it.TestBase
 
-private[spark] class SparkSuiteBase extends TestBase {
+private[spark] class SparkSuiteBase(kafka: Boolean = true) extends TestBase(kafka) {
   // TODO: following should be picked up from configuration.
-  val sparkVersion: String = "2.4.4"
-  val sparkKafkaPackage: String = "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4"
+  val sparkVersion: String = "3.0.0-preview"
+  val sparkKafkaPackage: String = "org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0-preview"
   val sparkImagePath: String = s"scrapcodes/spark:v$sparkVersion"
-  val examplesJar = s"/opt/spark/examples/jars/spark-examples_2.11-$sparkVersion.jar"
+  val examplesJar = s"local:///opt/spark/examples/jars/spark-examples_2.12-$sparkVersion.jar"
 }

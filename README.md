@@ -67,14 +67,14 @@ Run them by `sbt test`
 ##### Alternative 1.
 Run on minikube or single node k8s cluster.
 
-        Start minikube with kubernetes version as 1.12.7
+        Start minikube with kubernetes version as 1.14.6
         
         ```shell script
-         minikube start --kubernetes-version=1.12.7
+         minikube start --kubernetes-version=1.14.6
         ```
         
 ##### Alternative 2.
- Run on a real cluster with atleast 3 nodes. (supported k8s version: 1.12.7)
+ Run on a real cluster with atleast 3 nodes. (supported k8s version: 1.14.6)
 We need a kubernetes cluster with sufficient available resources to run the demo. Minimally
  it should have 3 nodes. The cluster should have minimally 14 cores available and 20 GiB of memory free.
  The reason is:
@@ -88,7 +88,7 @@ We need a kubernetes cluster with sufficient available resources to run the demo
     c. IBM MAX, service runs 2 instances of itself, and has minimum requirement of 1GiB memory and
       1.5 cpu per node.
 
-    d. Apache spark (as of version 2.4.4) by default uses 1.5 GiB of memory and 1 cpu by default for 
+    d. Apache spark (as of version 3.0.0-preview) by default uses 1.5 GiB of memory and 1 cpu by default for 
       both driver and executor, unless configured to be something else.
 
 Estimating the requirements, we would need a kubernetes cluster with 3 nodes and 14 free

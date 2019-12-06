@@ -53,8 +53,8 @@ class MicroServiceCluster(override val clusterConfig: MicroServiceClusterConfig)
       .createOrReplace(MicroServiceReplicaSet.replicaSet(clusterConfig))
     if (clusterConfig.enableHorizontalPodAutoscaler && k8sMinorVersion.contains("14")) {
       // Currently supported only for kubernetes version 1.14.x, configured with metrics.
-      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
-        .createOrReplace(MicroServiceReplicaSet.hpa(clusterConfig))
+//      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
+//        .createOrReplace(MicroServiceReplicaSet.hpa(clusterConfig))
     }
   }
 
@@ -66,8 +66,9 @@ class MicroServiceCluster(override val clusterConfig: MicroServiceClusterConfig)
       .withLabels(Services.labels(clusterConfig.clusterPrefix).asJava).delete()
     if (clusterConfig.enableHorizontalPodAutoscaler && k8sMinorVersion.contains("14")) {
       // Currently supported only for kubernetes version 1.14.x, configured with metrics.
-      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
-        .delete(MicroServiceReplicaSet.hpa(clusterConfig))
+      // TODO Fixme
+//      Cluster.kubernetesClient.autoscaling().horizontalPodAutoscalers()
+//        .delete(MicroServiceReplicaSet.hpa(clusterConfig))
     }
   }
 

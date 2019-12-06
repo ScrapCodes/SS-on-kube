@@ -19,21 +19,23 @@ import org.scalatest.concurrent.Eventually.{eventually, interval, timeout}
 
 import scala.concurrent.duration._
 
-class SparkClusterModeSuite extends SparkSuiteBase {
+class SparkClusterModeSuite extends SparkSuiteBase(false) {
 
   test("Run SparkPi example from Spark.") {
     val sparkPiClass = "org.apache.spark.examples.SparkPi"
 
-    val sparkJobCluster = new SparkJobClusterDeployViaPod(SparkJobClusterConfig("spi" + ts.testingPrefix,
-      s"k8s://https://kubernetes.$testK8sNamespace.svc",
-      sparkDeployMode = "cluster",
-      sparkPiClass,
-      sparkImagePath,
-      pathToJar = examplesJar,
-      numberOfExecutors = 2,
-      commandArgs = Array("100"),
-      kubernetesNamespace = testK8sNamespace,
-      serviceAccount = serviceAccount))
+    val sparkJobCluster = new SparkJobClusterDeployViaPod(
+      SparkJobClusterConfig(name = "spi" + ts.testingPrefix,
+        masterUrl = s"k8s://https://kubernetes.$testK8sNamespace.svc",
+        sparkDeployMode = "cluster",
+        className = sparkPiClass,
+        sparkImage = sparkImagePath,
+        pathToJar = examplesJar,
+        numberOfExecutors = 2,
+        commandArgs = Array("100"),
+        imagePullPolicy = "IfNotPresent",
+        kubernetesNamespace = testK8sNamespace,
+        serviceAccount = serviceAccount))
 
     sparkJobCluster.start()
     eventually(timeout(6.minutes), interval(2.minutes)) {
