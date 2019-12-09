@@ -18,7 +18,9 @@
     
     a. **demo** - an end to end ml pipeline, using Apache Spark structured streaming,
      kubernetes, kafka and IBM MAX.
-    
+     
+     Conference talk : https://www.youtube.com/watch?v=f9aJ4cnio1M
+     
     b. **deploy** - a set of kubernetes utilities to deploy the spark, kafka and zookeeper
         clusters. One of the goals of this module is to make writing an end to end
          pipelines as easy as providing some configuration and say start. More on this in 
